@@ -45,9 +45,9 @@ rnc -i/--input <path> # will parse the file at `<path>` relative to the the curr
 Each larger feature should be individually selectable:
 
 - `-a/--ast <path>`, for dumping the parsed AST to a file at `<path>` relative to current folder.
-- `-t/--type_check`, for running the type checker
-- `-vm/virtual_machine`, for running the `vm`
-- `-c/--code_gen`, for running the code generation
+- `-t/--type_check`, for running the type checker.
+- `-vm/virtual_machine`, for running the `vm`.
+- `-c/--code_gen`, for running the code generation.
 - `-asm <path>`, for dumping the generated code to a file at `<path>` relative to current folder.
 - `-r`, for running generated code using the `mips` crate `vm`.
 
