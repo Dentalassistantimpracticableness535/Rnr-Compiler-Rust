@@ -1,93 +1,74 @@
 # d7020_lab6
 
+In this lab you will put all pieces together and implement a simple command line interface (cli) for your RnR compiler.
 
+## Expected learning outcomes
 
-## Getting started
+- Rudimentary shell/terminal interaction
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- Command line parsing (yes, yet another parser - compiler technology is everywhere)
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Optional, for higher grades
 
-## Add your files
+  - Improved error messages from your type checker, and/or other functions that may giver rise to errors. You may look into [thiserror](https://crates.io/crates/thiserror), and [anyhow](https://crates.io/crates/anyhow), the former provides convenient ways to define error types, the latter streamlines handling of errors (context, conversion, chaining etc.)
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+  - Distinguish between warnings and hard errors.
 
+  - Error recovery and the ability to produce multiple warnings/errors.
+
+  - Use of Rust logging framework, for configurable tracing.
+
+  - Colorized output for errors, results, etc. You can use e.g., [colored](https://crates.io/crates/colored) to spice up your compiler.
+
+  - Detailed control over various features of your compiler, exposed through the `cli`.
+
+  - Reading `asm` files, and running them using the `mips` crate `vm`.
+
+## Command line parsing
+
+The usability of tools (UX) largely depends on the interaction and feedback given provided, including `--help` displaying various arguments and their use.
+
+In addition, sensible error messages hinting the user towards potential solutions, greatly improves the UX.
+
+The Rust compiler is by itself designed ground to provide best possible UX and can be seen as a blueprint for well designed user interfaces. To your help there are many crates helping you design your user interface. The most popular is [clap](https://crates.io/crates/clap), so I recommend you have a look at that.
+
+Our RnR language does not come with any module system, thus we are concerned with compiling just a single file.
+
+As a bare minimum your compiler should provide basic functionality to compile and run programs, e.g. as below:
+
+```shell
+rnt -h/--help # will show available arguments and their use
+rnc # will parse, will parse `main.rs` in current folder.
+rnc -i/--input <path> # will parse the file at `<path>` relative to the the current folder.
 ```
-cd existing_repo
-git remote add origin https://vesuvio-git.neteq.ltu.se/pln/d7020_lab6.git
-git branch -M main
-git push -uf origin main
-```
 
-## Integrate with your tools
+Each larger feature should be individually selectable:
 
-- [ ] [Set up project integrations](https://vesuvio-git.neteq.ltu.se/pln/d7020_lab6/-/settings/integrations)
+- `-a/--ast <path>`, for dumping the parsed AST to a file at `<path>` relative to current folder.
+- `-t/--type_check`, for running the type checker
+- `-vm/virtual_machine`, for running the `vm`
+- `-c/--code_gen`, for running the code generation
+- `-asm <path>`, for dumping the generated code to a file at `<path>` relative to current folder.
+- `-r`, for running generated code using the `mips` crate `vm`.
 
-## Collaborate with your team
+You can think of various extensions, e.g., allowing the compiler to read (and run) an `asm` file (as suggested above). This will involve writing a simple parser for the textual assembly language. (To this end a cleverly designed `regexp` should likely work out, as the `asm` language is very simple). You are now a seasoned programmer, able to fearlessly approach such challenges :)
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+## Submission
 
-## Test and Deploy
+For the `lab6` submission make sure your crate has an updated `README.md` (yes, you can now re-write the boring lab3 readme that you started out with, by a README describing the whole project, including the `cli`).
 
-Use the built-in continuous integration in GitLab.
+Update your `CHANGELOG.md`, in case you have collaborated with other students, make sure the `CHANGELOG.md` also contains author information for individual contributions. This is especially important if you aim for higher grades. (Collaboration is encouraged, however, be fair and give credit where credit is due.)
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+Also make sure your `ebnf.md` is up to date with the syntax of your RnR (you may assume that we already have tokens, thus no rules is needed for forming literals, strings, etc., keep it simple).
 
-***
+An extra plus for `sos.md` and `type_rules.md`, and besides making your repo look important they give a formalization for reasoning on the RnR language and the correctness of your compiler.
 
-# Editing this README
+Finally add a file `REFLECTION.md` where you look through the learning objectives for each lab, and make short comment how you used the lab to obtain knowledge regarding each learning outcome.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+You may also include personal highs and lows, those aha moments, as well as o-shit moments you had to plow through to get to your destination.
 
-## Suggestions for a good README
+Finally ask yourself, did you learn anything new in this course?
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Formulate in your own words, gained knowledge (might not be strictly compiler tech related, but knowledge that you gained through the work.)
 
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Thanks all for all your hard work, and I hope to see you around for the higher grade presentation in January (date to be determined).
