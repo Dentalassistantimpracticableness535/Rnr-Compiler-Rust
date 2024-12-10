@@ -38,7 +38,7 @@ As a bare minimum your compiler should provide basic functionality to compile an
 
 ```shell
 rnt -h/--help # will show available arguments and their use
-rnc # will parse, will parse `main.rs` in current folder.
+rnc # will parse `main.rs` in current folder.
 rnc -i/--input <path> # will parse the file at `<path>` relative to the the current folder.
 ```
 
