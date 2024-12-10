@@ -10,7 +10,7 @@ In this lab you will put all pieces together and implement a simple command line
 
 - Optional, for higher grades
 
-  - Improved error messages from your type checker, and/or other functions that may giver rise to errors. You may look into [thiserror](https://crates.io/crates/thiserror), and [anyhow](https://crates.io/crates/anyhow), the former provides convenient ways to define error types, the latter streamlines handling of errors (context, conversion, chaining etc.)
+  - Improved error messages from your type checker, and/or other functions that may give rise to errors. You may look into [thiserror](https://crates.io/crates/thiserror), and [anyhow](https://crates.io/crates/anyhow), the former provides convenient ways to define error types, the latter streamlines handling of errors (context, conversion, chaining etc.)
 
   - Distinguish between warnings and hard errors.
 
@@ -26,20 +26,20 @@ In this lab you will put all pieces together and implement a simple command line
 
 ## Command line parsing
 
-The usability of tools (UX) largely depends on the interaction and feedback given provided, including `--help` displaying various arguments and their use.
+The usability of tools (UX) largely depends on the interaction and feedback given, including `--help` displaying various arguments and their use.
 
 In addition, sensible error messages hinting the user towards potential solutions, greatly improves the UX.
 
-The Rust compiler is by itself designed ground to provide best possible UX and can be seen as a blueprint for well designed user interfaces. To your help there are many crates helping you design your user interface. The most popular is [clap](https://crates.io/crates/clap), so I recommend you have a look at that.
+The Rust compiler is by itself designed ground up to provide best possible UX and can be seen as a blueprint for well designed user interfaces. To your help there are many crates helping you design your user interface. The most popular is [clap](https://crates.io/crates/clap), so I recommend you have a look at that.
 
 Our RnR language does not come with any module system, thus we are concerned with compiling just a single file.
 
 As a bare minimum your compiler should provide basic functionality to compile and run programs, e.g. as below:
 
 ```shell
-rnt -h/--help # will show available arguments and their use
-rnc # will parse `main.rs` in current folder.
-rnc -i/--input <path> # will parse the file at `<path>` relative to the the current folder.
+rnr -h/--help # will show available arguments and their use
+rnr # will parse `main.rs` in current folder.
+rnr -i/--input <path> # will parse the file at `<path>` relative to the the current folder.
 ```
 
 Each larger feature should be individually selectable:
@@ -59,11 +59,11 @@ For the `lab6` submission make sure your crate has an updated `README.md` (yes, 
 
 Update your `CHANGELOG.md`, in case you have collaborated with other students, make sure the `CHANGELOG.md` also contains author information for individual contributions. This is especially important if you aim for higher grades. (Collaboration is encouraged, however, be fair and give credit where credit is due.)
 
-Also make sure your `ebnf.md` is up to date with the syntax of your RnR (you may assume that we already have tokens, thus no rules is needed for forming literals, strings, etc., keep it simple).
+Also make sure your `ebnf.md` is up to date with the syntax of your RnR (you may assume that we already have tokens, thus no rules are needed for forming literals, strings, etc., keep it simple).
 
 An extra plus for `sos.md` and `type_rules.md`, and besides making your repo look important they give a formalization for reasoning on the RnR language and the correctness of your compiler.
 
-Finally add a file `REFLECTION.md` where you look through the learning objectives for each lab, and make short comment how you used the lab to obtain knowledge regarding each learning outcome.
+Finally add a file `REFLECTION.md`. Look through the learning objectives for each lab and make short comment how you used the lab to obtain knowledge regarding each learning outcome. (You may cut n' paste earlier reflections, add or remove to your liking.)
 
 You may also include personal highs and lows, those aha moments, as well as o-shit moments you had to plow through to get to your destination.
 
