@@ -1,4 +1,4 @@
-# d7020_lab6
+# d7050e_lab6
 
 In this lab you will put all pieces together and implement a simple command line interface (cli) for your RnR compiler.
 
