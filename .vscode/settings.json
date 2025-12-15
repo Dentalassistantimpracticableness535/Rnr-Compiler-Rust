@@ -1,6 +1,3 @@
 {
-    "cSpell.ignoreWords": [
-        "EBNF",
-        "thiserror"
-    ]
+  "cSpell.ignoreWords": ["addi"]
 }

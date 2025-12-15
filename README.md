@@ -1,74 +1,150 @@
 # d7050e_lab6
 
-In this lab you will put all pieces together and implement a simple command line interface (cli) for your RnR compiler.
+A small, educational compiler toolchain for the RnR language. This repository contains a parser, AST representation, type checker, code generator, and optional runtime integration; the lab's goal is to assemble these pieces and provide a usable command-line interface (CLI) to build, inspect and run RnR programs.
 
-## Expected learning outcomes
+## Contents
 
-- Rudimentary shell/terminal interaction
+- `src/` : compiler implementation (parser, AST, type checker, codegen, VM integration, tests).
+- `examples/` : small RnR example programs used for testing and demonstration.
+- `out.asm` : example output file produced by code generation runs.
+- `CHANGELOG.md`, `REFLECTION.md`, `ebnf.md` : project documentation and course deliverables.
 
-- Command line parsing (yes, yet another parser - compiler technology is everywhere)
+## Features
+# RnR Compiler — Projet
 
-- Optional, for higher grades
+Ce dépôt contient une chaîne d'outils pédagogique pour le langage RnR : analyse lexicale/ syntaxique, représentation d'AST, vérification de types, génération de code et intégration d'un petit runtime/VM. Le README suivant vise un lecteur extérieur au cours — développeur ou évaluateur souhaitant comprendre, compiler et exécuter le projet.
 
-  - Improved error messages from your type checker, and/or other functions that may give rise to errors. You may look into [thiserror](https://crates.io/crates/thiserror), and [anyhow](https://crates.io/crates/anyhow), the former provides convenient ways to define error types, the latter streamlines handling of errors (context, conversion, chaining etc.)
+## Vue d'ensemble
 
-  - Distinguish between warnings and hard errors.
+Le projet est une implémentation simple d'un compilateur pour un langage didactique (RnR). Il permet de :
 
-  - Error recovery and the ability to produce multiple warnings/errors.
+- parser un fichier source RnR en un AST,
+- effectuer une vérification de types basique,
+- générer une représentation d'assemblage simplifiée (asm) et l'écrire sur disque,
+- exécuter le code généré via une VM intégrée (dépendant du support du crate `mips`),
+- fournir une interface en ligne de commande (CLI) pour chainer ces étapes.
 
-  - Use of Rust logging framework, for configurable tracing.
+Objectifs principaux : expérimentation pédagogique, tests d'exemples et exploration du pipeline compilation → exécution.
 
-  - Colorized output for errors, results, etc. You can use e.g., [colored](https://crates.io/crates/colored) to spice up your compiler.
+## Contenu du dépôt
 
-  - Detailed control over various features of your compiler, exposed through the `cli`.
+- `Cargo.toml` : configuration du projet Rust et dépendances.
+- `src/` : code source principal.
+	- `main.rs` : point d'entrée CLI.
+	- `parse.rs` : analyseur / parseur.
+	- `ast.rs`, `ast_traits.rs` : définitions de l'AST et utilitaires.
+	- `type_check.rs` : vérification de types et diagnostics.
+	- `codegen.rs` : génération de code (asm simplifié).
+	- `vm.rs` : VM/runtime et intégration d'exécution.
+	- autres fichiers utilitaires (`env.rs`, `error.rs`, `common.rs`, etc.).
+- `examples/` : petits programmes RnR pour démonstration et tests (ex. `gen_add.rs`, `run_print.rs`).
+- `out.asm` : exemple de sortie générée par le codegen (peut être régénéré).
+- `ebnf.md` : grammaire du langage RnR.
+- `CHANGELOG.md`, `REFLECTION.md` : documentation du projet et notes de développement.
+- `tests/` : tests unitaires et d'intégration.
 
-  - Reading `asm` files, and running them using the `mips` crate `vm`.
+## Fonctionnalités principales
 
-## Command line parsing
+- Parsing et construction d'un AST lisible.
+- Dump de l'AST vers un fichier pour inspection.
+- Vérification de types avec rapports d'erreur (basique).
+- Génération d'un assemblage textuel simple et option d'écriture sur disque.
+- Exécution du code généré via une VM intégrée (quand disponible).
+- CLI pour combiner étapes et options (voir ci‑dessous).
 
-The usability of tools (UX) largely depends on the interaction and feedback given, including `--help` displaying various arguments and their use.
+## Installation et compilation
 
-In addition, sensible error messages hinting the user towards potential solutions, greatly improves the UX.
+## RnR Compiler — Project Overview
 
-The Rust compiler is by itself designed ground up to provide best possible UX and can be seen as a blueprint for well designed user interfaces. To your help there are many crates helping you design your user interface. The most popular is [clap](https://crates.io/crates/clap), so I recommend you have a look at that.
+This repository implements a compiler pipeline for the RnR language. It provides a parser, an AST representation, a simple type checker, a small code generator that emits a textual assembly format (`asm`), and an VM for executing the generated code.
 
-Our RnR language does not come with any module system, thus we are concerned with compiling just a single file.
+## Repository layout
 
-As a bare minimum your compiler should provide basic functionality to compile and run programs, e.g. as below:
+- `Cargo.toml` — Rust project metadata and dependencies.
+- `src/` — source code:
+	- `main.rs` — CLI entry point.
+	- `parse.rs` — parser implementation.
+	- `ast.rs`, `ast_traits.rs` — AST definitions and helpers.
+	- `type_check.rs` — basic type checker and diagnostics.
+	- `codegen.rs` — code generation to a simple `asm` format.
+	- `vm.rs` — VM/runtime integration for executing generated code.
+	- other utilities (`env.rs`, `error.rs`, `common.rs`, etc.).
+- `examples/` — example RnR programs used for testing and demonstration.
+- `out.asm` — example output produced by the code generator (can be regenerated).
+- `ebnf.md` — grammar specification for RnR.
+- `CHANGELOG.md`, `REFLECTION.md` — development notes and reflections.
+- `tests/` — unit and integration tests.
 
-```shell
-rnr -h/--help # will show available arguments and their use
-rnr # will parse `main.rs` in current folder.
-rnr -i/--input <path> # will parse the file at `<path>` relative to the the current folder.
+## Features
+
+- Parse source files into an AST and optionally dump the AST to a file.
+- Perform a basic type checking pass and report errors.
+- Generate a simple textual assembly (`asm`) representation and write it to disk.
+- Optionally execute the generated code with a small VM (when dependencies allow).
+- A CLI to run individual phases or chain them in a pipeline.
+
+## Building
+
+Requirements: a recent Rust toolchain (rustc and cargo).
+
+To build the project:
+
+```bash
+cargo build --release
 ```
 
-Each larger feature should be individually selectable:
+To run the project in development mode:
 
-- `-a/--ast <path>`, for dumping the parsed AST to a file at `<path>` relative to current folder.
-- `-t/--type_check`, for running the type checker.
-- `-vm/virtual_machine`, for running the `vm`.
-- `-c/--code_gen`, for running the code generation.
-- `-asm <path>`, for dumping the generated code to a file at `<path>` relative to current folder.
-- `-r`, for running generated code using the `mips` crate `vm`.
+```bash
+cargo run -- [OPTIONS]
+```
 
-You can think of various extensions, e.g., allowing the compiler to read (and run) an `asm` file (as suggested above). This will involve writing a simple parser for the textual assembly language. (To this end a cleverly designed `regexp` should likely work out, as the `asm` language is very simple). You are now a seasoned programmer, able to fearlessly approach such challenges :)
+## CLI usage (typical options)
 
-## Submission
+Run `cargo run -- -h` to get the current, authoritative option list. Common flags implemented in this repository include:
 
-For the `lab6` submission make sure your crate has an updated `README.md` (yes, you can now re-write the boring lab3 readme that you started out with, by a README describing the whole project, including the `cli`).
+- `-h`, `--help` — display help.
+- `-i`, `--input <path>` — the RnR source file to compile (defaults to `main.rs` if omitted).
+- `-a`, `--ast <path>` — write the parsed AST to `<path>`.
+- `-t`, `--type_check` — run the type checker.
+- `-c`, `--code_gen` — run code generation.
+- `-asm <path>` — write generated assembly to `<path>`.
+- `-vm`, `--virtual_machine` — execute generated code with the integrated VM.
+- `-r` — run the generated `asm` with the runtime/VM (when supported).
 
-Update your `CHANGELOG.md`, in case you have collaborated with other students, make sure the `CHANGELOG.md` also contains author information for individual contributions. This is especially important if you aim for higher grades. (Collaboration is encouraged, however, be fair and give credit where credit is due.)
+Examples:
 
-Also make sure your `ebnf.md` is up to date with the syntax of your RnR (you may assume that we already have tokens, thus no rules are needed for forming literals, strings, etc., keep it simple).
+- Parse and save the AST:
 
-An extra plus for `sos.md` and `type_rules.md`, and besides making your repo look important they give a formalization for reasoning on the RnR language and the correctness of your compiler.
+```bash
+cargo run -- -i examples/gen_add.rs -a ast.json
+```
 
-Finally add a file `REFLECTION.md`. Look through the learning objectives for each lab and make short comment how you used the lab to obtain knowledge regarding each learning outcome. (You may cut n' paste earlier reflections, add or remove to your liking.)
+- Type check and emit assembly to `out.asm`:
 
-You may also include personal highs and lows, those aha moments, as well as o-shit moments you had to plow through to get to your destination.
+```bash
+cargo run -- -i examples/gen_add.rs -t -c -asm out.asm
+```
 
-Finally ask yourself, did you learn anything new in this course?
+- Generate and execute with VM:
 
-Formulate in your own words, gained knowledge (might not be strictly compiler tech related, but knowledge that you gained through the work.)
+```bash
+cargo run -- -i examples/run_print.rs -c -r
+```
 
-Thanks all for all your hard work, and I hope to see you around for the higher grade presentation in January (date to be determined).
+If the CLI has changed since this README was written, `-h` will show the current options.
+
+## Tests and development
+
+Run tests:
+
+```bash
+cargo test
+```
+
+Formatting and linting:
+
+```bash
+cargo fmt
+cargo clippy
+```
