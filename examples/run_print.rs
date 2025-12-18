@@ -1,6 +1,6 @@
 use d7050e_lab4::ast::*;
-use d7050e_lab4::codegen::generate_prog_to_string;
 use d7050e_lab4::codegen::generate_prog_to_instrs;
+use d7050e_lab4::codegen::generate_prog_to_string;
 use mips::vm::Mips;
 
 fn main() {

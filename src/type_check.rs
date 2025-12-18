@@ -7,6 +7,11 @@ pub struct TypeEnv {
     // store (Type, Mutable) per identifier so we can enforce mutability
     scopes: Vec<HashMap<String, (Type, Mutable)>>,
 }
+impl Default for FunEnv {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl TypeEnv {
     pub fn new() -> Self {
@@ -51,10 +56,20 @@ impl TypeEnv {
     pub fn lookup_var(&self, id: &str) -> Result<(Type, Mutable), Error> {
         for scope in self.scopes.iter().rev() {
             if let Some((t, m)) = scope.get(id) {
-                return Ok((t.clone(), m.clone()));
+                return Ok((t.clone(), *m));
             }
         }
         Err(format!("var '{}' isn't declared", id))
+    }
+}
+impl Default for TypeChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+impl Default for TypeEnv {
+    fn default() -> Self {
+        Self::new()
     }
 }
 /// A simple function environment to store FnDeclaration by name.
@@ -87,7 +102,7 @@ impl FunEnv {
     /// return an error. Otherwise push this overload into the vector.
     pub fn insert(&mut self, id: String, decl: FnDeclaration) -> Result<(), Error> {
         if let Some(top) = self.scopes.last_mut() {
-            let entry = top.entry(id.clone()).or_insert_with(Vec::new);
+            let entry = top.entry(id.clone()).or_default();
             // check for identical signature in this scope
             for f in entry.iter() {
                 if f.parameters.0.len() == decl.parameters.0.len()
@@ -276,7 +291,7 @@ impl TypeChecker {
             Expr::Block(b) => self.check_block(b),
             Expr::Ref(inner, mutable) => {
                 let it = self.check_expr(inner)?;
-                Ok(Type::Ref(Box::new(it), mutable.clone()))
+                Ok(Type::Ref(Box::new(it), *mutable))
             }
         }
     }
@@ -290,13 +305,12 @@ impl TypeChecker {
                         let it = self.check_expr(init_expr)?;
                         self.unify(it, annot_ty.clone())?;
                     }
-                    self.env
-                        .insert(id.clone(), annot_ty.clone(), mutable.clone())?;
+                    self.env.insert(id.clone(), annot_ty.clone(), *mutable)?;
                     Ok(Type::Unit)
                 } else if let Some(init_expr) = init {
                     // whithout type annotation
                     let it = self.check_expr(init_expr)?;
-                    self.env.insert(id.clone(), it, mutable.clone())?;
+                    self.env.insert(id.clone(), it, *mutable)?;
                     Ok(Type::Unit)
                 } else {
                     // whithout initialization
@@ -311,37 +325,32 @@ impl TypeChecker {
                 if let Expr::Ident(name) = lhs {
                     let (lty, mutbl) = self.env.lookup_var(name)?;
                     // verify mutability
-                    if mutbl.0 == false {
+                    if !mutbl.0 {
                         return Err(format!("assignment to immutable variable '{}'", name));
                     }
                     let rty = self.check_expr(rhs)?;
                     self.unify(rty, lty)?;
                     Ok(Type::Unit)
-                } else if let Expr::UnOp(op, inner) = lhs {
-                    if let UnOp::Deref = op {
-                        // assign through deref (with identifier)
-                        if let Expr::Ident(name) = &**inner {
-                            let (vty, _vmut) = self.env.lookup_var(name)?;
-                            match vty {
-                                Type::Ref(boxed_ty, ref_mut) => {
-                                    if ref_mut.0 == false {
-                                        return Err(format!(
-                                            "can't assign through immutable ref '{}'",
-                                            name
-                                        ));
-                                    }
-                                    let rty = self.check_expr(rhs)?;
-                                    self.unify(rty, *boxed_ty)?;
-                                    Ok(Type::Unit)
+                } else if let Expr::UnOp(UnOp::Deref, inner) = lhs {
+                    // assign through deref (with identifier)
+                    if let Expr::Ident(name) = &**inner {
+                        let (vty, _vmut) = self.env.lookup_var(name)?;
+                        match vty {
+                            Type::Ref(boxed_ty, ref_mut) => {
+                                if !ref_mut.0 {
+                                    return Err(format!(
+                                        "can't assign through immutable ref '{}'",
+                                        name
+                                    ));
                                 }
-                                _ => Err(format!("variable '{}' isn't a reference", name)),
+                                let rty = self.check_expr(rhs)?;
+                                self.unify(rty, *boxed_ty)?;
+                                Ok(Type::Unit)
                             }
-                        } else {
-                            Err("assignment to deref of non-identifier not yet supported"
-                                .to_string())
+                            _ => Err(format!("variable '{}' isn't a reference", name)),
                         }
                     } else {
-                        Err("assignment to non-identifier not yet supported".to_string())
+                        Err("assignment to deref of non-identifier not yet supported".to_string())
                     }
                 } else {
                     Err("assignment to non-identifier not yet supported".to_string())
@@ -402,8 +411,7 @@ impl TypeChecker {
             self.env.push();
             // bind parameters
             for p in &f.parameters.0 {
-                self.env
-                    .insert(p.id.clone(), p.ty.clone(), p.mutable.clone())?;
+                self.env.insert(p.id.clone(), p.ty.clone(), p.mutable)?;
             }
             // check body
             let body_ty = self.check_block(&f.body)?;

@@ -61,7 +61,7 @@ fn println_intrinsic(args: Vec<Val>) -> Result<Val, Error> {
 
     // Build the final string
     let mut out = String::new();
-    out.push_str(parts.get(0).copied().unwrap_or(""));
+    out.push_str(parts.first().copied().unwrap_or(""));
     for (text, v) in parts.iter().skip(1).zip(args.iter().skip(1)) {
         out.push_str(&val_to_string(v));
         out.push_str(text);

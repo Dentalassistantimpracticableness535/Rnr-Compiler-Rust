@@ -16,4 +16,4 @@ clap = { version = "4", features = ["derive"] }
 
 [[bin]]
 name = "rnr"
-path = "src/main.rs"
+path = "src/bin/rnr.rs"

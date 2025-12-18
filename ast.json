@@ -1,0 +1,75 @@
+Prog(
+    [
+        FnDeclaration {
+            id: "add",
+            parameters: Parameters(
+                [
+                    Parameter {
+                        mutable: Mutable(
+                            false,
+                        ),
+                        id: "a",
+                        ty: I32,
+                    },
+                    Parameter {
+                        mutable: Mutable(
+                            false,
+                        ),
+                        id: "b",
+                        ty: I32,
+                    },
+                ],
+            ),
+            ty: Some(
+                I32,
+            ),
+            body: Block {
+                statements: [
+                    Expr(
+                        BinOp(
+                            Add,
+                            Ident(
+                                "a",
+                            ),
+                            Ident(
+                                "b",
+                            ),
+                        ),
+                    ),
+                ],
+                semi: false,
+            },
+        },
+        FnDeclaration {
+            id: "main",
+            parameters: Parameters(
+                [],
+            ),
+            ty: None,
+            body: Block {
+                statements: [
+                    Expr(
+                        Call(
+                            "add",
+                            Arguments(
+                                [
+                                    Lit(
+                                        Int(
+                                            2,
+                                        ),
+                                    ),
+                                    Lit(
+                                        Int(
+                                            3,
+                                        ),
+                                    ),
+                                ],
+                            ),
+                        ),
+                    ),
+                ],
+                semi: false,
+            },
+        },
+    ],
+)

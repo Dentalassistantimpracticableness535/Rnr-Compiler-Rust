@@ -322,7 +322,7 @@ impl VM {
                         }
                         // call intrinsic
                         let res = func(evaluated_args)?;
-                        return Ok(res);
+                        Ok(res)
                     }
                     Val::Fun(func_decl) => {
                         // args nb check
@@ -386,7 +386,7 @@ impl VM {
                         }
 
                         let arg_types: Result<Vec<String>, Error> =
-                            evaluated_args.iter().map(|v| val_type(v)).collect();
+                            evaluated_args.iter().map(val_type).collect();
                         let arg_types = arg_types?;
 
                         // find matching overload by exact parameter types
@@ -497,59 +497,52 @@ impl VM {
                     }
                     Ok(Val::Lit(Literal::Unit))
                 // lhs with shape `*a = ...` where `a` is a reference
-                } else if let Expr::UnOp(op, inner) = lhs {
-                    if let UnOp::Deref = op {
-                        if let Expr::Ident(name) = &**inner {
-                            let new_val = self.eval_expr(rhs)?;
-                            // look up the variable that should hold the reference
-                            let stored = self.env.lookup(name)?;
-                            match stored {
-                                // r is a reference value stored by-value
-                                Val::RefVal(boxed) => {
-                                    match *boxed {
-                                        Val::Mut(_) => {
-                                            // replace inner mutable value inside the reference
-                                            let replacement =
-                                                Val::RefVal(Box::new(Val::Mut(Box::new(new_val))));
-                                            self.env.update(name, replacement)?;
-                                            Ok(Val::Lit(Literal::Unit))
-                                        }
-                                        _ => Err(format!(
-                                            "can't assign through immutable reference '{}'",
-                                            name
-                                        )),
-                                    }
+                } else if let Expr::UnOp(UnOp::Deref, inner) = lhs {
+                    if let Expr::Ident(name) = &**inner {
+                        let new_val = self.eval_expr(rhs)?;
+                        // look up the variable that should hold the reference
+                        let stored = self.env.lookup(name)?;
+                        match stored {
+                            // r is a reference value stored by-value
+                            Val::RefVal(boxed) => match *boxed {
+                                Val::Mut(_) => {
+                                    // replace inner mutable value inside the reference
+                                    let replacement =
+                                        Val::RefVal(Box::new(Val::Mut(Box::new(new_val))));
+                                    self.env.update(name, replacement)?;
+                                    Ok(Val::Lit(Literal::Unit))
                                 }
-                                // r is a name-based reference aliasing another variable
-                                Val::RefName(target, ref_mut) => {
-                                    if !ref_mut {
-                                        return Err(format!(
-                                            "can't assign through immutable reference '{}'",
-                                            name
-                                        ));
-                                    }
-                                    // look up the target variable
-                                    let target_stored = self.env.lookup(&target)?;
-                                    match target_stored {
-                                        Val::Mut(_) => {
-                                            self.env
-                                                .update(&target, Val::Mut(Box::new(new_val)))?;
-                                            Ok(Val::Lit(Literal::Unit))
-                                        }
-                                        _ => Err(format!(
-                                            "can't assign through immutable reference '{}'",
-                                            target
-                                        )),
-                                    }
+                                _ => Err(format!(
+                                    "can't assign through immutable reference '{}'",
+                                    name
+                                )),
+                            },
+                            // r is a name-based reference aliasing another variable
+                            Val::RefName(target, ref_mut) => {
+                                if !ref_mut {
+                                    return Err(format!(
+                                        "can't assign through immutable reference '{}'",
+                                        name
+                                    ));
                                 }
-                                _ => Err(format!("variable '{}' isn't reference", name)),
+                                // look up the target variable
+                                let target_stored = self.env.lookup(&target)?;
+                                match target_stored {
+                                    Val::Mut(_) => {
+                                        self.env
+                                            .update(&target, Val::Mut(Box::new(new_val)))?;
+                                        Ok(Val::Lit(Literal::Unit))
+                                    }
+                                    _ => Err(format!(
+                                        "can't assign through immutable reference '{}'",
+                                        target
+                                    )),
+                                }
                             }
-                        } else {
-                            Err("assignment to deref of non-identifier not yet supported"
-                                .to_string())
+                            _ => Err(format!("variable '{}' isn't reference", name)),
                         }
                     } else {
-                        Err("assignment to non-identifier not yet supported".to_string())
+                        Err("assignment to deref of non-identifier not yet supported".to_string())
                     }
                 } else {
                     Err("assignment to non-identifier not yet supported".to_string())

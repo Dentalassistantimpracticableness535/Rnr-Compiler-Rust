@@ -120,10 +120,7 @@ impl CodeGen {
             // assign offsets into pending map (do not make them visible yet)
             for (i, id) in locals.into_iter().enumerate() {
                 let off = -4 - 4 * (i as i32);
-                self.pending_locals
-                    .entry(id)
-                    .or_insert_with(Vec::new)
-                    .push(off);
+                self.pending_locals.entry(id).or_default().push(off);
             }
             self.next_local = -4 - 4 * n_locals;
         }
@@ -131,10 +128,7 @@ impl CodeGen {
         // Generate body; if function with not Unit return type,
         // we need to keep the last expression value on the stack to return it
         let is_tail = match &f.ty {
-            Some(t) => match t {
-                crate::ast::Type::Unit => false,
-                _ => true,
-            },
+            Some(t) => !matches!(t, crate::ast::Type::Unit),
             None => false,
         };
         self.gen_block(&f.body, is_tail)?;
@@ -283,7 +277,7 @@ impl CodeGen {
                         self.next_local -= 4;
                         off
                     };
-                    self.emit(format!("    addi t0, zero, 0"));
+                    self.emit("    addi t0, zero, 0".to_string());
                     self.emit(format!("    sw   t0, {}(fp)", off));
                     Ok(())
                 }
@@ -506,7 +500,7 @@ impl CodeGen {
                     if argc > 0 {
                         self.emit(format!("    addi t2, zero, {}", argc));
                     } else {
-                        self.emit(format!("    addi t2, zero, 0"));
+                        self.emit("    addi t2, zero, 0".to_string());
                     }
                     self.emit("    bal  println");
                     if argc > 0 {
@@ -582,6 +576,12 @@ impl CodeGen {
                 }
             }
         }
+    }
+}
+
+impl Default for CodeGen {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

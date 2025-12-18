@@ -142,15 +142,15 @@ where
         if steps > max_steps {
             eprintln!("timeout at step {} ip {}", steps, ip);
             // dump a short window of instructions around ip for diagnosis
-            let start = if ip >= 10 { ip - 10 } else { 0 };
+            let start = ip.saturating_sub(10);
             let end = std::cmp::min(instrs.len(), ip + 10);
             eprintln!("--- instr window {}..{} ---", start, end);
-            for i in start..end {
-                eprintln!("{:04}: {}", i, instrs[i]);
+            for (i, instr) in instrs[start..end].iter().enumerate() {
+                eprintln!("{:04}: {}", start + i, instr);
             }
             return Err(format!("execution timeout after {} steps", steps));
         }
-        if steps % 10000 == 0 {
+        if steps.is_multiple_of(10000) {
             if let Some(instr) = instrs.get(ip) {
                 eprintln!("step {} ip {} instr={}", steps, ip, instr);
             } else {

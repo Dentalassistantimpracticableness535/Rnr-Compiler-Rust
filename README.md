@@ -1,59 +1,3 @@
-# d7050e_lab6
-
-A small, educational compiler toolchain for the RnR language. This repository contains a parser, AST representation, type checker, code generator, and optional runtime integration; the lab's goal is to assemble these pieces and provide a usable command-line interface (CLI) to build, inspect and run RnR programs.
-
-## Contents
-
-- `src/` : compiler implementation (parser, AST, type checker, codegen, VM integration, tests).
-- `examples/` : small RnR example programs used for testing and demonstration.
-- `out.asm` : example output file produced by code generation runs.
-- `CHANGELOG.md`, `REFLECTION.md`, `ebnf.md` : project documentation and course deliverables.
-
-## Features
-# RnR Compiler — Projet
-
-Ce dépôt contient une chaîne d'outils pédagogique pour le langage RnR : analyse lexicale/ syntaxique, représentation d'AST, vérification de types, génération de code et intégration d'un petit runtime/VM. Le README suivant vise un lecteur extérieur au cours — développeur ou évaluateur souhaitant comprendre, compiler et exécuter le projet.
-
-## Vue d'ensemble
-
-Le projet est une implémentation simple d'un compilateur pour un langage didactique (RnR). Il permet de :
-
-- parser un fichier source RnR en un AST,
-- effectuer une vérification de types basique,
-- générer une représentation d'assemblage simplifiée (asm) et l'écrire sur disque,
-- exécuter le code généré via une VM intégrée (dépendant du support du crate `mips`),
-- fournir une interface en ligne de commande (CLI) pour chainer ces étapes.
-
-Objectifs principaux : expérimentation pédagogique, tests d'exemples et exploration du pipeline compilation → exécution.
-
-## Contenu du dépôt
-
-- `Cargo.toml` : configuration du projet Rust et dépendances.
-- `src/` : code source principal.
-	- `main.rs` : point d'entrée CLI.
-	- `parse.rs` : analyseur / parseur.
-	- `ast.rs`, `ast_traits.rs` : définitions de l'AST et utilitaires.
-	- `type_check.rs` : vérification de types et diagnostics.
-	- `codegen.rs` : génération de code (asm simplifié).
-	- `vm.rs` : VM/runtime et intégration d'exécution.
-	- autres fichiers utilitaires (`env.rs`, `error.rs`, `common.rs`, etc.).
-- `examples/` : petits programmes RnR pour démonstration et tests (ex. `gen_add.rs`, `run_print.rs`).
-- `out.asm` : exemple de sortie générée par le codegen (peut être régénéré).
-- `ebnf.md` : grammaire du langage RnR.
-- `CHANGELOG.md`, `REFLECTION.md` : documentation du projet et notes de développement.
-- `tests/` : tests unitaires et d'intégration.
-
-## Fonctionnalités principales
-
-- Parsing et construction d'un AST lisible.
-- Dump de l'AST vers un fichier pour inspection.
-- Vérification de types avec rapports d'erreur (basique).
-- Génération d'un assemblage textuel simple et option d'écriture sur disque.
-- Exécution du code généré via une VM intégrée (quand disponible).
-- CLI pour combiner étapes et options (voir ci‑dessous).
-
-## Installation et compilation
-
 ## RnR Compiler — Project Overview
 
 This repository implements a compiler pipeline for the RnR language. It provides a parser, an AST representation, a simple type checker, a small code generator that emits a textual assembly format (`asm`), and an VM for executing the generated code.
@@ -99,6 +43,46 @@ To run the project in development mode:
 cargo run -- [OPTIONS]
 ```
 
+## Running the CLI
+
+Commands to build and run the CLI and to run the example RnR files shipped in `examples/`.
+
+- Build the project (release):
+
+```bash
+cargo build --release
+```
+
+- Run the compiler via `cargo run` :
+
+```bash
+cargo run -- -i examples/gen_add.rnr -a ast.json
+```
+
+- Generate assembly and run it with the VM (development run):
+
+```bash
+cargo run -- -i examples/run_print.rnr -c -r
+```
+
+- Install a local `rnr` binary (so you can call `rnr` directly):
+
+```bash
+cargo install --path .
+# then run:
+rnr -i examples/gen_add.rnr -t -c -asm out.asm
+```
+
+If `cargo run` selects a different default binary, you can still call the installed `rnr` directly after `cargo install`.
+
+- If you just want to clean build artifacts before packaging:
+
+```bash
+cargo clean
+```
+
+If you use the installed binary (`cargo install`), the executable name will be `rnr` (package name and `clap` command name are already set to `rnr`).
+
 ## CLI usage (typical options)
 
 Run `cargo run -- -h` to get the current, authoritative option list. Common flags implemented in this repository include:
@@ -114,25 +98,25 @@ Run `cargo run -- -h` to get the current, authoritative option list. Common flag
 
 Examples:
 
-- Parse and save the AST:
+- Parse and save the AST (use the RnR source file):
 
 ```bash
-cargo run -- -i examples/gen_add.rs -a ast.json
+cargo run -- -i examples/gen_add.rnr -a ast.json
 ```
 
 - Type check and emit assembly to `out.asm`:
 
 ```bash
-cargo run -- -i examples/gen_add.rs -t -c -asm out.asm
+cargo run -- -i examples/gen_add.rnr -t -c -asm out.asm
 ```
 
 - Generate and execute with VM:
 
 ```bash
-cargo run -- -i examples/run_print.rs -c -r
+cargo run -- -i examples/run_print.rnr -c -r
 ```
 
-If the CLI has changed since this README was written, `-h` will show the current options.
+`-h` will show the current options.
 
 ## Tests and development
 

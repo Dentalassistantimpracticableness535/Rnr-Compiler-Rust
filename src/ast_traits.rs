@@ -102,14 +102,14 @@ impl fmt::Display for Type {
             Type::I32 => write!(f, "i32"),
             Type::Bool => write!(f, "bool"),
             Type::String => write!(f, "String"),
-                Type::Unit => write!(f, "()"),
-                Type::Ref(inner, mutbl) => {
-                    if mutbl.0 {
-                        write!(f, "&mut {}", inner)
-                    } else {
-                        write!(f, "&{}", inner)
-                    }
+            Type::Unit => write!(f, "()"),
+            Type::Ref(inner, mutbl) => {
+                if mutbl.0 {
+                    write!(f, "&mut {}", inner)
+                } else {
+                    write!(f, "&{}", inner)
                 }
+            }
         }
     }
 }

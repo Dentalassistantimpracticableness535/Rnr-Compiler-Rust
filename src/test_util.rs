@@ -12,7 +12,9 @@ macro_rules! test_expr {
         let expected = $expr;
         let src = stringify!($expr);
         let expr: $crate::ast::Expr = $crate::parse::parse(src);
-        let result: $crate::ast::Literal = $crate::common::Eval::<$crate::vm::Val>::eval(&expr).unwrap().into();
+        let result: $crate::ast::Literal = $crate::common::Eval::<$crate::vm::Val>::eval(&expr)
+            .unwrap()
+            .into();
         assert_eq!(result, $crate::ast::Literal::from(expected));
     }};
 }

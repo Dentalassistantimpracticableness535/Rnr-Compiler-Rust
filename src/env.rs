@@ -1,6 +1,6 @@
+use crate::ast::FnDeclaration;
 use crate::error::Error;
 use crate::vm::Val;
-use crate::ast::FnDeclaration;
 use std::collections::HashMap;
 
 /// stack of scopes with  HashMap<String, Val> for each scope
@@ -37,7 +37,7 @@ impl Env {
     }
 
     /// Insert function declaration into scope (but we keep overloads).
-    /// If a funct with a same name already exists in the same scope and is a, we 
+    /// If a funct with a same name already exists in the same scope and is a, we
     /// append this declaration to the overload set.
     pub fn insert_overload(&mut self, name: String, decl: FnDeclaration) {
         if let Some(scope) = self.scopes.last_mut() {
@@ -45,15 +45,14 @@ impl Env {
             if let Some(existing) = scope.get_mut(&name) {
                 match existing {
                     Val::Fun(prev) => {
-                        let mut v = Vec::new();
-                        v.push(prev.clone());
-                        v.push(decl);
-                        *existing = Val::Overloads(v);
+                        *existing = Val::Overloads(vec![prev.clone(), decl]);
                     }
                     Val::Overloads(vec) => {
                         vec.push(decl);
                     }
-                    _ => {scope.insert(name, Val::Fun(decl));}
+                    _ => {
+                        scope.insert(name, Val::Fun(decl));
+                    }
                 }
             } else {
                 scope.insert(name, Val::Fun(decl));
@@ -193,8 +192,8 @@ mod tests {
 
     #[test]
     fn test_insert_overload_preserves_overloads() {
-        use crate::parse::parse;
         use crate::ast::Prog;
+        use crate::parse::parse;
 
         let mut env = Env::new();
         // two functions with same name but different parameter types
