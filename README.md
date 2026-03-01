@@ -143,3 +143,6 @@ Formatting and linting:
 cargo fmt
 cargo clippy
 ```
+
+## Notes
+- IA was used to write this document (Claude Sonnet 4.6)
