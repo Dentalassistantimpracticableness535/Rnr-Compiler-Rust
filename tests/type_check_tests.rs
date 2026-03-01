@@ -1,7 +1,7 @@
-use d7050e_lab4::ast::{Block, Expr, Type};
-use d7050e_lab4::parse::parse;
-use d7050e_lab4::test_util::{assert_block_type_fail, assert_type};
-use d7050e_lab4::type_check::TypeChecker;
+use rnr::ast::{Block, Expr, Type};
+use rnr::parse::parse;
+use rnr::test_util::{assert_block_type_fail, assert_type};
+use rnr::type_check::TypeChecker;
 
 // I use a lot AI to make these tests
 
@@ -137,7 +137,7 @@ fn fn_in_child_scope_does_not_mask_global_after_exit() {
 
 #[test]
 fn fn_return_type_mismatch_is_error() {
-    let prog: d7050e_lab4::ast::Prog = parse("fn f(x: i32) -> i32 { true }");
+    let prog: rnr::ast::Prog = parse("fn f(x: i32) -> i32 { true }");
     let mut tc = TypeChecker::new();
     let r = tc.check_prog(&prog);
     assert!(

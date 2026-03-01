@@ -121,12 +121,19 @@ impl From<Expr> for Statement {
 
 impl From<Expr> for Block {
     fn from(expr: Expr) -> Self {
-        todo!()
+        Block {
+            statements: vec![expr.into()],
+            semi: false,
+        }
     }
 }
 
 impl From<Statement> for Block {
     fn from(stmt: Statement) -> Self {
-        todo!()
+        let semi = !matches!(stmt, Statement::Expr(_));
+        Block {
+            statements: vec![stmt],
+            semi,
+        }
     }
 }

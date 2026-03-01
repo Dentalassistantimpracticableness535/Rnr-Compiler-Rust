@@ -79,15 +79,10 @@ impl BinOp {
                 }
                 Ok(Val::Lit(Literal::Int(l / r)))
             }
-            BinOp::And => {
-                let l = left.get_bool()?;
-                let r = right.get_bool()?;
-                Ok(Val::Lit(Literal::Bool(l && r)))
-            }
-            BinOp::Or => {
-                let l = left.get_bool()?;
-                let r = right.get_bool()?;
-                Ok(Val::Lit(Literal::Bool(l || r)))
+            // And/Or are handled via short-circuit evaluation in eval_expr;
+            // they should never reach BinOp::eval with both operands evaluated.
+            BinOp::And | BinOp::Or => {
+                unreachable!("And/Or should be short-circuited in eval_expr")
             }
             BinOp::Eq => match (left, right) {
                 (Val::Lit(Literal::Int(a)), Val::Lit(Literal::Int(b))) => {
@@ -136,7 +131,12 @@ impl Eval<Val> for Prog {
     fn eval(&self) -> Result<Val, Error> {
         let mut vm = VM::new();
 
-        // find main
+        // register all toplevel functions (so they can call each other)
+        for f in &self.0 {
+            vm.env.insert_overload(f.id.clone(), f.clone());
+        }
+
+        // find main + evaluate its body
         let main_fn = self
             .0
             .iter()
@@ -254,11 +254,31 @@ impl VM {
                     _ => Ok(val),
                 }
             }
-            Expr::BinOp(op, left, right) => {
-                let left: Val = self.eval_expr(left)?;
-                let right: Val = self.eval_expr(right)?;
-                op.eval(left, right)
-            }
+            Expr::BinOp(op, left, right) => match op {
+                BinOp::And => {
+                    let l = self.eval_expr(left)?;
+                    if !l.get_bool()? {
+                        Ok(Val::Lit(Literal::Bool(false)))
+                    } else {
+                        let r = self.eval_expr(right)?;
+                        Ok(Val::Lit(Literal::Bool(r.get_bool()?)))
+                    }
+                }
+                BinOp::Or => {
+                    let l = self.eval_expr(left)?;
+                    if l.get_bool()? {
+                        Ok(Val::Lit(Literal::Bool(true)))
+                    } else {
+                        let r = self.eval_expr(right)?;
+                        Ok(Val::Lit(Literal::Bool(r.get_bool()?)))
+                    }
+                }
+                _ => {
+                    let left: Val = self.eval_expr(left)?;
+                    let right: Val = self.eval_expr(right)?;
+                    op.eval(left, right)
+                }
+            },
             Expr::UnOp(op, expr) => {
                 let val = self.eval_expr(expr)?;
                 match op {
@@ -812,7 +832,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "local functions not yet implemented"]
     fn test_local_fn() {
         let v = parse_test::<Prog, Val>(
             "

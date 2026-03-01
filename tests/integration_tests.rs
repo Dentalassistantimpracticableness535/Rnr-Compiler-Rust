@@ -1,8 +1,8 @@
 //use syn::parse::Parse;
-use d7050e_lab4::ast::*;
-//use d7050e_lab4::util::*;
-use d7050e_lab4::test_util::*;
-//use d7050e_lab4::parse::Parse;
+use rnr::ast::*;
+//use rnr::util::*;
+use rnr::test_util::*;
+//use rnr::parse::Parse;
 
 #[cfg(test)]
 mod expr {
@@ -374,7 +374,6 @@ mod expr {
         );
     }
 
-    #[ignore = "Requires that short-circuiting of logical operations are implemented."]
     #[test]
     fn short_circuit() {
         test_expr!(1 < 0 && 1 < 1 / 0);
@@ -753,7 +752,6 @@ fn gcd_hard() {
 mod ref_deref {
     use super::*;
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn init_with_ref_to_lit_infer_type() {
         test_block!(
@@ -765,7 +763,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn init_with_ref_to_lit_with_type() {
         test_block!(
@@ -777,7 +774,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn init_with_ref_to_expr_and_deref() {
         test_block!(
@@ -789,7 +785,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn init_ref_late_with_type() {
         test_block!(
@@ -802,7 +797,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn init_ref_late_infer_type() {
         test_block!(
@@ -815,7 +809,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn init_with_ref_to_var() {
         test_block!(
@@ -828,7 +821,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn init_with_deref_ref_to_lit() {
         test_block!(
@@ -840,7 +832,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn init_with_deref_ref_to_var() {
         test_block!(
@@ -853,7 +844,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn reassign_mut_ref_lit() {
         test_block!(
@@ -866,7 +856,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn reassign_mut_ref_var() {
         test_block!(
@@ -888,7 +877,7 @@ mod ref_deref {
     /// - Calls function with (relatively) complex expressions.
     /// - Relies on expressions being parsed properly (with correct precedence).
     /// NOTE: This requires full support for mutable references.
-    #[ignore = "Requires references to be implemented"]
+    #[ignore = "Cross-scope mutable refs: RefName aliasing breaks when param shadows referred var"]
     #[test]
     fn gcd_harder() {
         test_block!({
@@ -937,7 +926,6 @@ mod ref_deref {
         );
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn crazy_ref_deref() {
         test_expr!(*&if !*&!true { 1 } else { 2 });
@@ -956,7 +944,6 @@ mod ref_deref {
         });
     }
 
-    #[ignore = "Requires references to be implemented"]
     #[test]
     fn if_ref_deref() {
         test_expr!(*if true { &1 } else { &2 });

@@ -7,11 +7,6 @@ pub struct TypeEnv {
     // store (Type, Mutable) per identifier so we can enforce mutability
     scopes: Vec<HashMap<String, (Type, Mutable)>>,
 }
-impl Default for FunEnv {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl TypeEnv {
     pub fn new() -> Self {
@@ -62,17 +57,14 @@ impl TypeEnv {
         Err(format!("var '{}' isn't declared", id))
     }
 }
-impl Default for TypeChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+
 impl Default for TypeEnv {
     fn default() -> Self {
         Self::new()
     }
 }
-/// A simple function environment to store FnDeclaration by name.
+
+/// function environment to store FnDeclaration by name
 #[derive(Debug)]
 pub struct FunEnv {
     // allow multiple overloads per name in the same scope
@@ -131,6 +123,12 @@ impl FunEnv {
             }
         }
         Err(format!("function '{}' not found", id))
+    }
+}
+
+impl Default for FunEnv {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -367,7 +365,15 @@ impl TypeChecker {
                 Ok(t)
             }
             Statement::Fn(fdecl) => {
-                // hoisted elsewhere; skip here
+                // sign already hoisted; now type-check the body
+                self.env.push();
+                for p in &fdecl.parameters.0 {
+                    self.env.insert(p.id.clone(), p.ty.clone(), p.mutable)?;
+                }
+                let body_ty = self.check_block(&fdecl.body)?;
+                let ret_ty = fdecl.ty.clone().unwrap_or(Type::Unit);
+                self.unify(body_ty, ret_ty)?;
+                self.env.pop()?;
                 Ok(Type::Unit)
             }
         }
@@ -421,6 +427,12 @@ impl TypeChecker {
             self.env.pop()?;
         }
         Ok(())
+    }
+}
+
+impl Default for TypeChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

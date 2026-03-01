@@ -1,8 +1,5 @@
 # Changelog for RNR
 
-YOUR CHANGES/ADDED FEATURES HERE
-
-
 Note : I used AI to help to write this
 
   ## Contributors / Reviewers
@@ -17,17 +14,14 @@ Note : I used AI to help to write this
     to simplify tests; reported two shadowing-related tests which led to checks and clarifications
     around variable shadowing semantics in the type checker and `insert` behavior.
   - Anton Nyström: requested end-to-end tests that parse source strings, generate assembly and run the
-    generated code to verify runtime behaviour; this motivated adding integration tests for codegen+VM.
-  - Lisa QUANTIN: asked for tests that also check runtime output (not just generated ASM) to better
-    validate scoping and local-variable behaviour; inspired creation of capture-enabled println tests
-    and improvements to the test harness so outputs can be asserted programmatically.
+    generated code to verify runtime behaviour; this motivated adding integration tests for codegen+VM (using the `mips` crate VM).
 
 
 ## Additional features implemented
 
 - Mutability enforcement at runtime: the VM rejects assignment to variables that were not created as mutable cells (`let mut` or `mut` parameters).
-- Reference support in AST/VM/type-checker: `&expr` / `&mut expr` and `*expr` with typed `Ref` in the static checker and `Val::Ref` / `Val::Mut` at runtime; assignment-through-deref checks.
-- Function overloading preserved at runtime: `Env::insert_overload` and `Val::Overloads` allow multiple `fn` declarations with the same name to coexist; the VM attempts best-effort overload selection by runtime argument shapes when static resolution is not sufficient.
+- Reference support in AST/VM/type-checker: `&expr` / `&mut expr` and `*expr` with typed `Type::Ref` in the static checker and `Val::RefName(name, is_mut)` / `Val::RefVal(Box<Val>)` at runtime; assignment-through-deref checks.
+- Function overloading preserved at runtime: `Env::insert_overload` and `Val::Overloads` allow multiple `fn` declarations with the same name to coexist; the VM selects the matching overload by runtime argument shapes.
 - Hoisting + overload-aware hoisting: local `fn` declarations are hoisted into the block's scope before statement execution and hoisting preserves overload groups.
 
 
@@ -51,13 +45,15 @@ Note : I used AI to help to write this
 
 - VM (`src/vm.rs`):
   - Added runtime function values `Val::Fun(FnDeclaration)` and implemented local function calls.
-    Calls evaluate arguments, push a new scope, bind parameters (creating `Val::Mut` for `mut` params),
+    Calls evaluate arguments, push a new scope, bind parameters (creating mutable bindings for `mut` params),
     evaluate the function body, then pop the scope and return the result.
   - Implemented hoisting of local `fn` declarations at block entry: the VM inserts `FnDecl` bindings
     into the current scope before executing statements, allowing calls to functions defined later in
     the same block.
-  - Implemented references and dereference support (`&`, `&mut`, `*`), including assignment through
-    dereference when the referenced cell is mutable.
+  - Implemented references and dereference support (`&`, `&mut`, `*`): `&ident` produces
+    `Val::RefName(name, is_mut)` (an alias to a named binding) and `&expr` produces
+    `Val::RefVal(Box<Val>)` (a boxed value); assignment through dereference is allowed only when
+    the referenced cell is mutable.
   - Extended equality (`==`) to compare `int`, `bool`, `string`, and unit values.
 
 - Parser (`src/parse.rs`):
@@ -104,42 +100,48 @@ Note : I used AI to help to write this
   - Implemented `Eval<Type>` for `Block` so tests can evaluate blocks through the common test utilities.
 
 - Documentation updates:
-  - Updated `ebnf.md` to include reference types and clarify the syntax/semantics of `&`/`&mut` and `mut` parameters/locals.
-  - Updated `sos.md` to explain runtime immutability enforcement, assignment-through-deref semantics, and static vs runtime overload resolution.
+  - Updated `ebnf.md` to include reference types (`&Type`, `&mut Type`) integrated into the `Type` rule.
 
 Notes:
-- The type checker currently resolves overloads by exact match only (no subtyping/conversions).
-- Advanced control-flow/return-path analysis is still TODO (some tests are still `#[ignore]`).
+- The type checker resolves overloads by exact match only (no subtyping/conversions).
+- `fn_missing_return_path_error` is still `#[ignore]` (control-flow return-path analysis not implemented).
 
-Notes and next steps:
-- The VM now supports local function calls and references; update to type checking and further builtins can follow.
-- Recommended next steps: run the full test suite locally (`cargo test`) or enable CI to ensure regressions are caught.
-
-See `ebnf.md` and `sos.md` for up-to-date grammar and semantics documentation.
+See `ebnf.md` for up-to-date grammar documentation.
 
 ## 2025-12-07
 
-- Codegen improvements:
+- Codegen (`src/codegen.rs`):
   - Support for emitting addresses for `&ident` (addressing via `fp` offsets) and lowering of
     assignments through dereference (`*r = v`) into load/store sequences.
   - Single-frame reservation for locals: collect locals first and reserve stack space once per function.
-  - String interning into a `.data` section and conditional emission of a `println` runtime stub when a
-    `bal println` call is detected (detection implemented by tokenizing emitted instruction lines).
+  - String interning into a `.data` section and conditional emission of a `println` runtime stub.
   - `push_reg`/`pop_reg` fixes to correctly use target registers.
+  - `gen_block` respects `Block.semi`: only propagates `is_tail` when the last statement is a
+    tail expression; pushes unit (0) when the block produces no value. Fixes stack corruption in
+    `gen_shadow_nested_blocks` and similar patterns.
+  - `Expr::Block` always pushes exactly one value: calls `gen_block(b, true)` for value blocks,
+    or `gen_block(b, false)` + push unit for `semi=true` blocks.
+  - Bootstrap sequence: `addi sp, zero, 10000` → `bal_label("main")` → `halt()`, so
+    `jr ra` from `main` lands on `halt`.
+  - `mul`/`div`: textual ASM is emitted normally; `generate_prog_to_instrs` returns `Err(...)` for
+    these instructions since the `mips` crate VM does not support them.
 
-- Runtime / asm runner:
-   - Replaced the ad-hoc textual `asm_runner` with execution via the `mips` crate; codegen can
-     now convert its textual ASM into `mips::instrs::Instrs` (see `codegen::generate_prog_to_instrs`) and
-     run on `mips::vm::Mips` for more realistic testing.
+- Test infrastructure (`src/common.rs`):
+  - Replaced hand-written MIPS simulator with `mips::vm::Mips::new(instrs).run()`.
+    `codegen_test` now calls `generate_prog_to_instrs` and runs the real `mips` crate VM.
+  - `TestMachine.output` is always `String::new()` — the MIPS VM does not capture I/O output.
 
-- VM and semantics:
-  - Reference representation refined: `RefName(name, is_mut)` for aliasing references to named bindings
-    and `RefVal(Box<Val>)` for boxed reference values created from non-ident expressions. Deref/assign
-    semantics updated accordingly.
-  - `let` without initializer now supported: variables without an initializer are bound to a default
-    value (e.g. `0` for integers or `()` for unit); annotated `let id: T;` is accepted when a default for `T` is defined.
+- VM semantics (`src/vm.rs`):
+  - Reference representation: `Val::RefName(name, is_mut)` for aliasing references to named
+    bindings; `Val::RefVal(Box<Val>)` for boxed values from non-ident expressions.
+  - Short-circuit evaluation for `&&` and `||`; `BinOp::And`/`BinOp::Or` in `BinOp::eval` are
+    `unreachable!()`.
+  - `Eval<Val> for Prog` registers all top-level functions before evaluating `main`.
 
-- Tests & documentation:
-  - Added/updated unit and integration tests for codegen, VM, and runtime behaviors (including deref-assignment tests).
-  - Added documentation files: `SUBMISSION_REPORT.md`, `ASM_RUNNER_EXPL_FR.md`, `ASM_RUNNER_WALKTHROUGH_FR.md`,
-    `TESTS_RUNTIME_CALLS_WALKTHROUGH_FR.md`, and `TESTS_CODEGEN_WALKTHROUGH_FR.md`.
+- Tests:
+  - `gen_recursive_factorial` and `gen_divide_by_zero_behavior` marked `#[ignore]`
+    (mul/div not supported by `mips` crate VM).
+  - Codegen `println` tests: dead `m.output` assertions removed (output not captured by MIPS VM).
+  - 12 of 13 `ref_deref` integration tests un-ignored (all pass); `gcd_harder` stays ignored
+    (cross-scope `RefName` aliasing not yet supported).
+  - `short_circuit` integration test un-ignored.

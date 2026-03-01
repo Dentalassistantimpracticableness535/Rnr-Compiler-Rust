@@ -756,23 +756,25 @@ use quote::quote;
 
 impl Parse for Type {
     fn parse(input: ParseStream) -> Result<Type> {
-        // The syn::Type is very complex and overkill
-        // Types in Rust involve generics, paths
-        // etc., etc., etc. ...
-        //
-        // To make things simple, we just turn the syn::Type
-        // to a token stream (`quote`) and turn that into a String
-        // and turn that into an &str (`as_str`)
-        // Parse syn::Type from input
         let syn_ty: syn::Type = input.parse()?;
-        let type_str = quote!(#syn_ty).to_string();
-        match type_str.as_str() {
-            "i32" => Ok(Type::I32),
-            "bool" => Ok(Type::Bool),
-            "String" => Ok(Type::String),
-            "()" => Ok(Type::Unit),
-            _ => Err(input.error(format!("unsupported type: {}", type_str))),
+        fn convert(ty: &syn::Type) -> std::result::Result<Type, String> {
+            use quote::quote;
+            // handle reference types: &T, &mut T
+            if let syn::Type::Reference(r) = ty {
+                let mutable = r.mutability.is_some();
+                let inner = convert(&r.elem)?;
+                return Ok(Type::Ref(Box::new(inner), Mutable(mutable)));
+            }
+            let s = quote!(#ty).to_string();
+            match s.as_str() {
+                "i32" => Ok(Type::I32),
+                "bool" => Ok(Type::Bool),
+                "String" => Ok(Type::String),
+                "()" => Ok(Type::Unit),
+                _ => Err(format!("unsupported type: {}", s)),
+            }
         }
+        convert(&syn_ty).map_err(|msg| input.error(msg))
     }
 }
 
@@ -797,6 +799,36 @@ mod parse_type {
     fn parse_type_unit() {
         let typ: Type = parse("()");
         assert_eq!(typ, Type::Unit);
+    }
+
+    #[test]
+    fn parse_type_ref_i32() {
+        let typ: Type = parse("&i32");
+        assert_eq!(typ, Type::Ref(Box::new(Type::I32), Mutable(false)));
+    }
+
+    #[test]
+    fn parse_type_ref_mut_i32() {
+        let typ: Type = parse("&mut i32");
+        assert_eq!(typ, Type::Ref(Box::new(Type::I32), Mutable(true)));
+    }
+
+    #[test]
+    fn parse_type_ref_bool() {
+        let typ: Type = parse("&bool");
+        assert_eq!(typ, Type::Ref(Box::new(Type::Bool), Mutable(false)));
+    }
+
+    #[test]
+    fn parse_type_ref_ref_i32() {
+        let typ: Type = parse("&&i32");
+        assert_eq!(
+            typ,
+            Type::Ref(
+                Box::new(Type::Ref(Box::new(Type::I32), Mutable(false))),
+                Mutable(false)
+            )
+        );
     }
 
     #[test]

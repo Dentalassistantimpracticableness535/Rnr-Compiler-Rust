@@ -49,7 +49,7 @@ fn main() {
     };
 
     // Parse
-    let prog_res = d7050e_lab4::parse::try_parse::<d7050e_lab4::ast::Prog>(&src);
+    let prog_res = rnr::parse::try_parse::<rnr::ast::Prog>(&src);
     let prog = match prog_res {
         Ok(p) => p,
         Err(e) => {
@@ -69,7 +69,7 @@ fn main() {
 
     // Type check
     if args.type_check {
-        let mut tc = d7050e_lab4::type_check::TypeChecker::new();
+        let mut tc = rnr::type_check::TypeChecker::new();
         if let Err(e) = tc.check_prog(&prog) {
             eprintln!("type error: {}", e);
             std::process::exit(1);
@@ -80,7 +80,7 @@ fn main() {
 
     // Interpreter VM (evaluate AST)
     if args.vm {
-        match <d7050e_lab4::ast::Prog as d7050e_lab4::common::Eval<d7050e_lab4::vm::Val>>::eval(
+        match <rnr::ast::Prog as rnr::common::Eval<rnr::vm::Val>>::eval(
             &prog,
         ) {
             Ok(v) => println!("vm result: {:?}", v),
@@ -93,7 +93,7 @@ fn main() {
 
     // Codegen
     if args.code_gen || args.asm.is_some() || args.run {
-        match d7050e_lab4::codegen::generate_prog_to_string(&prog) {
+        match rnr::codegen::generate_prog_to_string(&prog) {
             Ok(asm) => {
                 if args.code_gen {
                     println!("--- Generated ASM ---\n{}\n--- End ASM ---", asm);
@@ -106,7 +106,7 @@ fn main() {
                     println!("Wrote asm to {}", path.display());
                 }
                 if args.run {
-                    match d7050e_lab4::codegen::generate_prog_to_instrs(&prog) {
+                    match rnr::codegen::generate_prog_to_instrs(&prog) {
                         Ok(instrs) => {
                             let mut m = mips::vm::Mips::new(instrs);
                             match m.run() {

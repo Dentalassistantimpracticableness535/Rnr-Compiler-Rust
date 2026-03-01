@@ -212,9 +212,21 @@ impl CodeGen {
         // block do not leak to outer scopes
         let saved_locals = self.locals.clone();
         let len = b.statements.len();
+        // A block has a real tail value only when semi=false AND the last statement is an Expr
+        let last_has_value = !b.semi
+            && b.statements
+                .last()
+                .map(|s| matches!(s, Statement::Expr(_)))
+                .unwrap_or(false);
         for (i, stmt) in b.statements.iter().enumerate() {
             let is_last = i + 1 == len;
-            self.gen_stmt(stmt, is_tail && is_last)?; // boolean to know if we let the value on stack
+            // Propagate is_tail only when the block actually produces a value
+            self.gen_stmt(stmt, is_tail && is_last && last_has_value)?;
+        }
+        // If the caller needs a value but this block has no tail expression, push unit (0)
+        if is_tail && !last_has_value {
+            self.emit("    addi t0, zero, 0");
+            self.push_reg("t0");
         }
         // restore outer scope locals
         self.locals = saved_locals;
@@ -546,7 +558,24 @@ impl CodeGen {
                 self.emit(format!("{}:", l_end));
                 Ok(())
             }
-            Expr::Block(b) => self.gen_block(b, false),
+            Expr::Block(b) => {
+                // gen_expr must always push exactly one value.
+                // If the block has a tail expression (semi=false, last stmt is Expr),
+                // delegate to gen_block(b, true) which leaves that value on the stack.
+                // Otherwise the block evaluates to () — run gen_block(b, false) then push unit.
+                let has_tail = !b.semi
+                    && b.statements
+                        .last()
+                        .map_or(false, |s| matches!(s, Statement::Expr(_)));
+                if has_tail {
+                    self.gen_block(b, true)?;
+                } else {
+                    self.gen_block(b, false)?;
+                    self.emit("    addi t0, zero, 0");
+                    self.push_reg("t0");
+                }
+                Ok(())
+            }
             Expr::Ref(inner, _m) => {
                 // If referencing an identifier, generate its address (fp + offset)
                 match &**inner {
@@ -648,15 +677,14 @@ pub fn generate_prog_to_instrs(prog: &Prog) -> Result<Instrs, Error> {
     // Build Instr vector
     let mut instrs_vec: Vec<Instr> = Vec::new();
 
-    // When main returns with jr ra (ra==0), it jumps to address 0
-    // Put halt() at address 0 to terminate program properly
-    instrs_vec.push(halt());
-
     // Initialize stack pointer
     instrs_vec.push(addi(Reg::sp, Reg::zero, 10000));
 
-    // Jump to start program execution
-    instrs_vec.push(b_label("main"));
+    // call main (bal sets ra to next instruction = halt)
+    instrs_vec.push(bal_label("main"));
+
+    // when main returns via jr ra, execution lands here
+    instrs_vec.push(halt());
 
     for line in instr_lines.iter() {
         if line.ends_with(":") {
@@ -709,6 +737,12 @@ pub fn generate_prog_to_instrs(prog: &Prog) -> Result<Instrs, Error> {
                 let r1 = parts[2].trim_end_matches(',');
                 let r2 = parts[3];
                 instrs_vec.push(slt(reg_from_str(rd)?, reg_from_str(r1)?, reg_from_str(r2)?));
+            }
+            "mul" | "div" => {
+                return Err(format!(
+                    "'{}' instruction not supported by the MIPS crate VM",
+                    op
+                ));
             }
             "la" => {
                 let rd = parts[1].trim_end_matches(',');

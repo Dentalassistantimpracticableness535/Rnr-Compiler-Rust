@@ -3,8 +3,9 @@
 Terminal symbols: `ident`, `int`, `bool` (`true`/`false`), `string`, punctuation
 `+ - * / && || == < > ! = ; , ( ) { } -> fn let mut while if else println! & *`.
 
-Program:
+## Program
 
+```
 Prog        ::= { FnDecl }
 
 FnDecl      ::= `fn` ident `(` Parameters `)` [ `->` Type ] Block
@@ -17,29 +18,42 @@ Arguments   ::= /* empty */ | Expr { `,` Expr } [ `,` ]
 Block       ::= `{` { Statement } `}`
 
 Statement   ::= `let` [ `mut` ] ident [ `:` Type ] [ `=` Expr ] `;`
-                            | Expr `=` Expr `;` 
-                            | `while` Expr Block
-                            | FnDecl
-                            | Expr (may be final element without `;`)
+              | Expr `=` Expr `;`
+              | `while` Expr Block
+              | FnDecl
+              | Expr                        (* tail expression, no `;` *)
+```
 
-Expr        ::= Equality
-Equality    ::= Logic { `==` Logic }
-Logic       ::= And { `||` And }
-And         ::= Sum { `&&` Sum }
+## Expressions (precedence low → high)
+
+```
+Expr        ::= Or
+Or          ::= And { `||` And }
+And         ::= Comparison { `&&` Comparison }
+Comparison  ::= Sum { ( `==` | `<` | `>` ) Sum }
 Sum         ::= Product { ( `+` | `-` ) Product }
 Product     ::= Unary { ( `*` | `/` ) Unary }
 Unary       ::= ( `!` | `-` | `*` ) Unary | Primary
 Primary     ::= literal
-                            | ident
-                            | ident `!` `(` Arguments `)` 
-                            | ident `(` Arguments `)`  
-                            | `&` [ `mut` ] Primary 
-                            | `(` Expr `)`
-                            | IfThenElse
-                            | Block
+              | ident
+              | ident `!` `(` Arguments `)`       (* macro call, e.g. println! *)
+              | ident `(` Arguments `)`            (* function call *)
+              | `&` [ `mut` ] Primary              (* reference *)
+              | `(` Expr `)`
+              | IfThenElse
+              | Block
+```
 
+## Control flow
+
+```
 IfThenElse  ::= `if` Expr Block [ `else` ( IfThenElse | Block ) ]
+```
 
+## Types
+
+```
 Type        ::= `i32` | `bool` | `String` | `()`
-
-ReferenceType ::= `&` Type | `&mut` Type
+              | `&` Type                           (* immutable reference *)
+              | `&` `mut` Type                     (* mutable reference *)
+```

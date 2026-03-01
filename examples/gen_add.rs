@@ -1,5 +1,5 @@
-use d7050e_lab4::ast::*;
-use d7050e_lab4::codegen::generate_prog_to_string;
+use rnr::ast::*;
+use rnr::codegen::generate_prog_to_string;
 
 fn main() {
     let add = FnDeclaration {

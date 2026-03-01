@@ -1,6 +1,6 @@
-use d7050e_lab4::ast::*;
-use d7050e_lab4::common::Eval;
-use d7050e_lab4::vm::Val;
+use rnr::ast::*;
+use rnr::common::Eval;
+use rnr::vm::Val;
 
 #[test]
 fn vm_call_add_returns_value() {
