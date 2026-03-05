@@ -79,8 +79,6 @@ impl BinOp {
                 }
                 Ok(Val::Lit(Literal::Int(l / r)))
             }
-            // And/Or are handled via short-circuit evaluation in eval_expr;
-            // they should never reach BinOp::eval with both operands evaluated.
             BinOp::And | BinOp::Or => {
                 unreachable!("And/Or should be short-circuited in eval_expr")
             }

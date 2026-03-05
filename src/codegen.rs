@@ -212,7 +212,7 @@ impl CodeGen {
         // block do not leak to outer scopes
         let saved_locals = self.locals.clone();
         let len = b.statements.len();
-        // A block has a real tail value only when semi=false AND the last statement is an Expr
+        // block with real tail value only when semi=false AND last statement is Expr
         let last_has_value = !b.semi
             && b.statements
                 .last()
@@ -220,10 +220,10 @@ impl CodeGen {
                 .unwrap_or(false);
         for (i, stmt) in b.statements.iter().enumerate() {
             let is_last = i + 1 == len;
-            // Propagate is_tail only when the block actually produces a value
+            // propagate is_tail only when the block actually produces a value
             self.gen_stmt(stmt, is_tail && is_last && last_has_value)?;
         }
-        // If the caller needs a value but this block has no tail expression, push unit (0)
+        // ff caller needs value but no tail expression -> push unit (0)
         if is_tail && !last_has_value {
             self.emit("    addi t0, zero, 0");
             self.push_reg("t0");
@@ -559,10 +559,6 @@ impl CodeGen {
                 Ok(())
             }
             Expr::Block(b) => {
-                // gen_expr must always push exactly one value.
-                // If the block has a tail expression (semi=false, last stmt is Expr),
-                // delegate to gen_block(b, true) which leaves that value on the stack.
-                // Otherwise the block evaluates to () — run gen_block(b, false) then push unit.
                 let has_tail = !b.semi
                     && b.statements
                         .last()

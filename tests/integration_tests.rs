@@ -869,14 +869,6 @@ mod ref_deref {
         );
     }
 
-    /// Most difficult version of the GCD function.
-    /// - Calls functions before they are defined.
-    /// - Defines nested functions.
-    /// - Extensive use of mutable references.
-    /// - Uses unary operator `-x`.
-    /// - Calls function with (relatively) complex expressions.
-    /// - Relies on expressions being parsed properly (with correct precedence).
-    /// NOTE: This requires full support for mutable references.
     #[ignore = "Cross-scope mutable refs: RefName aliasing breaks when param shadows referred var"]
     #[test]
     fn gcd_harder() {
