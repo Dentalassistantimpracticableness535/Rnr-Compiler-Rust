@@ -1,4 +1,4 @@
-// Clippy: these tests intentionally use degenerate Rust expressions (redundant
+// clippy: these tests intentionally use degenerate Rust expressions (redundant
 // deref/addrof, tautological booleans, identity ops, manual swaps, etc.) to
 // exercise the parser and VM on complex/edge-case patterns.
 #![allow(
