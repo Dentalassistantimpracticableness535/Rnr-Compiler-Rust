@@ -562,7 +562,7 @@ impl CodeGen {
                 let has_tail = !b.semi
                     && b.statements
                         .last()
-                        .map_or(false, |s| matches!(s, Statement::Expr(_)));
+                        .is_some_and(|s| matches!(s, Statement::Expr(_)));
                 if has_tail {
                     self.gen_block(b, true)?;
                 } else {

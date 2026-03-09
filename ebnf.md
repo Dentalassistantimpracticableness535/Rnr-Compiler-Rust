@@ -21,7 +21,7 @@ Statement   ::= `let` [ `mut` ] ident [ `:` Type ] [ `=` Expr ] `;`
               | Expr `=` Expr `;`
               | `while` Expr Block
               | FnDecl
-              | Expr                        (* tail expression, no `;` *)
+              | Expr                     (* tail expression, no `;` *)
 ```
 
 ## Expressions (precedence low → high)
@@ -36,7 +36,7 @@ Product     ::= Unary { ( `*` | `/` ) Unary }
 Unary       ::= ( `!` | `-` | `*` ) Unary | Primary
 Primary     ::= literal
               | ident
-              | ident `!` `(` Arguments `)`       (* macro call, e.g. println! *)
+              | ident `!` `(` Arguments `)`        (* macro call, e.g. println! *)
               | ident `(` Arguments `)`            (* function call *)
               | `&` [ `mut` ] Primary              (* reference *)
               | `(` Expr `)`
@@ -54,6 +54,6 @@ IfThenElse  ::= `if` Expr Block [ `else` ( IfThenElse | Block ) ]
 
 ```
 Type        ::= `i32` | `bool` | `String` | `()`
-              | `&` Type                           (* immutable reference *)
-              | `&` `mut` Type                     (* mutable reference *)
+              | `&` Type                    (* immutable reference *)
+              | `&` `mut` Type              (* mutable reference *)
 ```

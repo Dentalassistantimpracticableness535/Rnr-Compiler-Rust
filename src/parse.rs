@@ -679,7 +679,7 @@ mod parse_if {
     // This test is not really a test of our parser
     // Added just a reference to how Rust would treat the nesting.
     #[test]
-    #[allow(unused_must_use)]
+    #[allow(unused_must_use, clippy::collapsible_else_if, clippy::no_effect)]
     fn test_if_then_else_nested_rust() {
         if false {
             2;
@@ -693,7 +693,7 @@ mod parse_if {
     // This test is not really a test of our parser
     // Added just a reference to how Rust would treat the nesting.
     #[test]
-    #[allow(unused_must_use)]
+    #[allow(unused_must_use, clippy::no_effect)]
     fn test_if_then_else_nested_rust2() {
         if false {
             2;

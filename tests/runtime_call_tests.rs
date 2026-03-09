@@ -43,13 +43,14 @@ fn vm_call_add_returns_value() {
     };
 
     // create a block that hoists the functions and then calls main
-    let mut stmts: Vec<Statement> = Vec::new();
-    stmts.push(Statement::Fn(add));
-    stmts.push(Statement::Fn(main));
-    stmts.push(Statement::Expr(Expr::Call(
-        "main".to_string(),
-        Arguments(vec![]),
-    )));
+    let stmts: Vec<Statement> = vec![
+        Statement::Fn(add),
+        Statement::Fn(main),
+        Statement::Expr(Expr::Call(
+            "main".to_string(),
+            Arguments(vec![]),
+        )),
+    ];
     let block = Block::new(stmts, false);
     let val = block.eval().expect("vm eval");
     match val {

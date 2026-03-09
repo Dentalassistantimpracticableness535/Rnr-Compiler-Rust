@@ -1,3 +1,24 @@
+// Clippy: these tests intentionally use degenerate Rust expressions (redundant
+// deref/addrof, tautological booleans, identity ops, manual swaps, etc.) to
+// exercise the parser and VM on complex/edge-case patterns.
+#![allow(
+    clippy::deref_addrof,
+    clippy::nonminimal_bool,
+    clippy::overly_complex_bool_expr,
+    clippy::identity_op,
+    clippy::erasing_op,
+    clippy::if_same_then_else,
+    clippy::ifs_same_cond,
+    clippy::collapsible_else_if,
+    clippy::neg_multiply,
+    clippy::assign_op_pattern,
+    clippy::needless_bool_assign,
+    clippy::needless_late_init,
+    clippy::let_and_return,
+    clippy::manual_swap,
+    clippy::eq_op
+)]
+
 //use syn::parse::Parse;
 use rnr::ast::*;
 //use rnr::util::*;
