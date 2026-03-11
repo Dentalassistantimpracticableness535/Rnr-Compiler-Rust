@@ -1,7 +1,7 @@
+use mips::vm::Mips;
 use rnr::ast::*;
 use rnr::codegen::generate_prog_to_instrs;
 use rnr::codegen::generate_prog_to_string;
-use mips::vm::Mips;
 
 fn main() {
     let f = FnDeclaration {

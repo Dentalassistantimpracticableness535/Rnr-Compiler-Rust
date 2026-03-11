@@ -46,10 +46,7 @@ fn vm_call_add_returns_value() {
     let stmts: Vec<Statement> = vec![
         Statement::Fn(add),
         Statement::Fn(main),
-        Statement::Expr(Expr::Call(
-            "main".to_string(),
-            Arguments(vec![]),
-        )),
+        Statement::Expr(Expr::Call("main".to_string(), Arguments(vec![]))),
     ];
     let block = Block::new(stmts, false);
     let val = block.eval().expect("vm eval");

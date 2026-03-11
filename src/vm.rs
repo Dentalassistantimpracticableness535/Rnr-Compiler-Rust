@@ -547,8 +547,7 @@ impl VM {
                                 let target_stored = self.env.lookup(&target)?;
                                 match target_stored {
                                     Val::Mut(_) => {
-                                        self.env
-                                            .update(&target, Val::Mut(Box::new(new_val)))?;
+                                        self.env.update(&target, Val::Mut(Box::new(new_val)))?;
                                         Ok(Val::Lit(Literal::Unit))
                                     }
                                     _ => Err(format!(

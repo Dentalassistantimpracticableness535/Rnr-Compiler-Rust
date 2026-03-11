@@ -123,8 +123,11 @@ fn gen_println_runs_and_generates_asm() {
 
     let prog: ast::Prog = rnr::parse::parse(src);
     let asm = generate_prog_to_string(&prog).expect("codegen");
-    assert!(asm.contains(".data") || asm.contains(".asciiz"),
-        "expected .data section in asm:\n{}", asm);
+    assert!(
+        asm.contains(".data") || asm.contains(".asciiz"),
+        "expected .data section in asm:\n{}",
+        asm
+    );
     assert!(
         asm.contains("bal  println") || asm.contains("bal println"),
         "asm missing println call:\n{}",

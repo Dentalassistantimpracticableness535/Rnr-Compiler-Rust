@@ -8,7 +8,7 @@ fn main() {
         b_label("main"),
         // Halt
         halt(),
-        // Main: addi t0, zero, 42 ; jr ra
+        // main: addi t0, zero, 42 ; jr ra
         addu(Reg::zero, Reg::zero, Reg::zero).label("main"),
         addi(Reg::t0, Reg::zero, 42),
         jr(Reg::ra),

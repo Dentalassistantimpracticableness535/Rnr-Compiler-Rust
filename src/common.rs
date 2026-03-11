@@ -65,17 +65,16 @@ where
 {
     // parse as a Prog and generate assembly text (for debug output)
     let prog: crate::ast::Prog = crate::parse::parse(_src);
-    let asm = crate::codegen::generate_prog_to_string(&prog).map_err(|e| {
-        crate::error::Error::from(format!("codegen error: {}", e))
-    })?;
+    let asm = crate::codegen::generate_prog_to_string(&prog)
+        .map_err(|e| crate::error::Error::from(format!("codegen error: {}", e)))?;
     eprintln!("--- Generated ASM ---\n{}\n--- End ASM ---", asm);
 
-    // convert to MIPS instructions and run 
+    // convert to MIPS instructions and run
     let instrs = crate::codegen::generate_prog_to_instrs(&prog)?;
     let mut mips_vm = mips::vm::Mips::new(instrs);
     match mips_vm.run() {
         Err(mips::error::Error::Halt) => {} // normal termination
-        Ok(_) => {}                          // ran off the end (also OK)
+        Ok(_) => {}                         // ran off the end (also OK)
         Err(e) => return Err(format!("MIPS VM error: {:?}", e)),
     }
 

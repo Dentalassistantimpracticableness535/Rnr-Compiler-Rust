@@ -80,9 +80,7 @@ fn main() {
 
     // Interpreter VM (evaluate AST)
     if args.vm {
-        match <rnr::ast::Prog as rnr::common::Eval<rnr::vm::Val>>::eval(
-            &prog,
-        ) {
+        match <rnr::ast::Prog as rnr::common::Eval<rnr::vm::Val>>::eval(&prog) {
             Ok(v) => println!("vm result: {:?}", v),
             Err(e) => {
                 eprintln!("vm error: {}", e);
