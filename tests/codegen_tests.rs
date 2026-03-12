@@ -429,3 +429,75 @@ fn codegen_mips_call_function_finishes() {
         Err(e) => panic!("mips run failed with unexpected error: {:?}", e),
     }
 }
+
+// ---------------------------------------------------------------------------
+// Local (nested) function codegen
+// ---------------------------------------------------------------------------
+
+/// A function defined *inside* main must be callable.
+///
+/// ```rnr
+/// fn main() -> i32 {
+///     fn add(a: i32, b: i32) -> i32 { a + b }
+///     add(3, 4)
+/// }
+/// ```
+/// Expected: t0 = 7
+#[test]
+fn gen_local_fn_inside_main() {
+    let m = codegen_test::<ast::Prog>(
+        "fn main() -> i32 {
+            fn add(a: i32, b: i32) -> i32 { a + b }
+            add(3, 4)
+        }",
+    )
+    .expect("codegen_test");
+    assert_eq!(m.rf.get(mips::rf::Reg::t0), 7);
+}
+
+/// Two local functions defined inside main, calling each other is not
+/// required — just both callable from main.
+///
+/// ```rnr
+/// fn main() -> i32 {
+///     fn double(x: i32) -> i32 { x + x }
+///     fn inc(x: i32) -> i32 { x + 1 }
+///     inc(double(3))
+/// }
+/// ```
+/// Expected: t0 = 7
+#[test]
+fn gen_two_local_fns() {
+    let m = codegen_test::<ast::Prog>(
+        "fn main() -> i32 {
+            fn double(x: i32) -> i32 { x + x }
+            fn inc(x: i32) -> i32 { x + 1 }
+            inc(double(3))
+        }",
+    )
+    .expect("codegen_test");
+    assert_eq!(m.rf.get(mips::rf::Reg::t0), 7);
+}
+
+/// A local function that is called together with local variables.
+///
+/// ```rnr
+/// fn main() -> i32 {
+///     let a: i32 = 10;
+///     fn sub(x: i32, y: i32) -> i32 { x - y }
+///     sub(a, 3)
+/// }
+/// ```
+/// Expected: t0 = 7
+#[test]
+fn gen_local_fn_with_locals() {
+    let m = codegen_test::<ast::Prog>(
+        "fn main() -> i32 {
+            let a: i32 = 10;
+            fn sub(x: i32, y: i32) -> i32 { x - y }
+            sub(a, 3)
+        }",
+    )
+    .expect("codegen_test");
+    assert_eq!(m.rf.get(mips::rf::Reg::t0), 7);
+}

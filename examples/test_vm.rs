@@ -4,8 +4,8 @@ fn main() {
     let instrs: Vec<Instr> = vec![
         // Initialize SP
         addi(Reg::sp, Reg::zero, 10000),
-        // Jump to main label
-        b_label("main"),
+        // Call main (bal sets ra to next instruction = halt)
+        bal_label("main"),
         // Halt
         halt(),
         // main: addi t0, zero, 42 ; jr ra
@@ -24,7 +24,10 @@ fn main() {
 
     println!("\nRunning mips VM...");
     match m.run() {
-        Ok(_) => println!("SUCCESS"),
+        Ok(_) | Err(mips::error::Error::Halt) => {
+            let ret = m.rf.get(Reg::t0) as i32;
+            println!("SUCCESS — t0 = {}", ret);
+        }
         Err(e) => println!("FAILED: {:?}", e),
     }
 }

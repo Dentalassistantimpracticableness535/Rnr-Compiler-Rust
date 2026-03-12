@@ -394,7 +394,32 @@ impl CodeGen {
                     Ok(())
                 }
             }
-            Statement::Fn(_) => Ok(()),
+            Statement::Fn(f) => {
+                // Jump over the function body so sequential execution
+                // doesn't fall through into it — the function is only
+                // entered explicitly via `bal <label>`.
+                let skip = self.fresh_label("skip_fn");
+                self.emit(format!("    b    {}", skip));
+
+                // Save the enclosing function's codegen context
+                let saved_params = self.params.clone();
+                let saved_locals = self.locals.clone();
+                let saved_pending = self.pending_locals.clone();
+                let saved_next = self.next_local;
+
+                // Generate the local function (label + prologue + body + epilogue)
+                self.generate_function(f)?;
+
+                // Restore the enclosing function's context
+                self.params = saved_params;
+                self.locals = saved_locals;
+                self.pending_locals = saved_pending;
+                self.next_local = saved_next;
+
+                // Landing label after the skipped function body
+                self.emit(format!("{}:", skip));
+                Ok(())
+            }
         }
     }
 

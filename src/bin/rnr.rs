@@ -108,9 +108,9 @@ fn main() {
                         Ok(instrs) => {
                             let mut m = mips::vm::Mips::new(instrs);
                             match m.run() {
-                                Ok(_) => println!("Program completed"),
-                                Err(mips::error::Error::Halt) => {
-                                    println!("Program completed (halt)")
+                                Ok(_) | Err(mips::error::Error::Halt) => {
+                                    let ret = m.rf.get(mips::rf::Reg::t0) as i32;
+                                    println!("mips run: t0 = {}", ret);
                                 }
                                 Err(e) => {
                                     eprintln!("runtime error: {:?}", e);
