@@ -2,8 +2,10 @@
 name = "rnr"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "A compiler toolchain for the RnR language: parser, type checker, tree-walking interpreter, and MIPS code generator."
+license = "MIT"
+keywords = ["compiler", "mips", "interpreter", "type-checker", "parser"]
+categories = ["compilers"]
 
 [dependencies]
 indented = "0.1.0"

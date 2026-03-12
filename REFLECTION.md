@@ -1,117 +1,65 @@
-# Reflection
+# Development Reflection
 
-## Lab 1 — Introduction to Rust
+A personal retrospective on building the rnr compiler, what I learned, what was hard, and what I would do differently.
 
-- **Basic understanding of the Rust tool-chain installation and use.**
-  -> I had some difficulties at first, I used ChatGPT to help me with the setup. After that it went smoothly with cargo.
+## Phase 1  Getting Started with Rust
 
-- **Use of editing environment for Rust development.**
-  -> VSCode with rust-analyzer was very helpful : the inline error messages, type hints, and auto-completion helped me understand faster what was going on.
+- **Toolchain & environment**: I had some difficulties at first with the Rust setup. After figuring out `cargo`, `rustc`, and `rust-analyzer` in VSCode, everything went smoothly, inline error messages, type hints, and auto-completion helped a lot.
+- **Data structures**: Learning how `enum`, `struct`, `Vec`, and `Result<T, E>` work in Rust. The `Result` type was confusing at first but after a few exercises it clicked.
+- **Ownership and borrowing**: The borrow checker was new to me. It felt strict at first, but I now understand why it's necessary for memory safety. Seeing the difference between `Clone`/`Copy` and move semantics in practice was very helpful.
+- **Traits and generics**: `Debug`, `Display`, `Iterator`, and generic types like `Result<i32, Error>` all made sense after working through examples.
 
-- **How to organize data in structs, enums, arrays, and vectors.**
-  -> I discovered how these structures work in Rust. The enum `Result<T, E>` was a bit confusing at first but now I get it.
+## Phase 2 : Parsing
 
-- **Use of macros (e.g., `println!`, `vec!`)**
-  -> All was clear, nothing too surprising.
+- **Regular expressions vs. real parsing**: I used the `regex` crate for simple pattern matching, but quickly realized that regex can't handle nested structures or operator precedence, you need a proper parser.
+- **Building an AST**: Constructing the AST manually (with Rust enums/structs) and then evaluating it was a great introduction. It made me understand how source code gets turned into a structured representation that a compiler can work with.
+- **Parsing with `syn`**: Extending the parser to handle operators, precedence, and parentheses was the hardest part. Getting operator precedence right required implementing a recursive descent / precedence climbing parser. I had to think about it with pen and paper before the code worked.
+- **EBNF grammar**: Documenting the grammar formally helped me think clearly about what expressions are valid and how to avoid ambiguity.
 
-- **The use of Traits, Debug, Iterator**
-  -> Same, everything was understandable. I saw how Debug gives custom formatting and how iterators work on vectors.
+## Phase 3 : Interpreter (Tree-Walking VM)
 
-- **Use of generics**
-  -> I was a bit surprised by `Result<i32, Error>` and didn't fully understand how it worked at first, but after the exercises it clicked.
+- **AST design**: I designed the AST using Rust enums and structs. Each variant of `Expr` and `Statement` maps to a language construct. Having a clean AST made the rest of the work much easier.
+- **Scoped environment**: I implemented a stacked environment (`Env`) with push/pop scope. After a peer review I realized it was better to use a single env for both variables and functions, to handle cases where a variable shadows a function name.
+- **Evaluation**: The VM evaluates the AST by walking it recursively. Getting blocks right (local scope, return value from last expression, the `semi` flag) was the most time-consuming part. Also implementing function hoisting, where `fn` declarations are visible before the line they appear on, was an interesting concept.
+- **Short-circuit evaluation** for `&&` and `||`, chained `else if`, and reference/dereference support (`&`, `&mut`, `*`).
 
-- **The Clone trait and the Copy trait in relation to "move" and "copy" behavior.**
-  -> This part was well explained. Seeing the difference before/after implementing Clone/Copy really helped me understand ownership.
+## Phase 4 : Type Checker
 
-- **References and borrow checking.**
-  -> The borrow system was new to me. It seemed strict but I understand now why its necessary for memory safety.
+- **Semantic analysis**: Type checking catches errors that the grammar alone cannot express (like adding a `bool` to an `i32`). It's another layer of validation before code generation.
+- **Type environments**: Very similar to the VM, but tracking types instead of values. I reused the same `Env` structure.
+- **Function overloading**: Multiple `fn` declarations with the same name but different parameter types are allowed, and the type checker resolves calls by exact match. Storing a vector of signatures per name was an interesting design choice.
+- **Mutability check**: Assignment to a non-`mut` variable is rejected statically. The VM also enforces it at runtime as an extra safety net.
 
-## Lab 2 — Parsing to an AST
+This phase made me appreciate how much work a real type checker does, even for a small language there are many edge cases.
 
-- **Regular expressions and their limitations.**
-  -> I used the `regex` crate to match patterns in strings. It works for simple stuff but I quickly saw that regex can't handle nested structures or operator precedence : you need a real parser for that.
+## Phase 5 : Code Generation (MIPS)
 
-- **Simple AST for expressions.**
-  -> Building an AST manually (just creating the tree by hand with structs/enums) and then evaluating it was a good introduction. It made me realize that this is how source code gets turned into something the computer can work with.
+- **From AST to assembly**: Going from a high-level tree to load/store/branch instructions made the whole pipeline concrete. Seeing your source code turn into actual machine instructions is satisfying.
+- **Stack machine approach**: Evaluate expressions by pushing results onto the stack, then pop operands, compute, push result back. Simple in theory but easy to get wrong, especially the order of push/pop for binary operations.
+- **Stack frame layout**: Arguments above `fp`, `ra` and old `fp` saved, locals below `fp`. Getting the offsets right was the most time-consuming part, lots of off-by-one debugging.
+- **Local functions in codegen**: A late addition, nested `fn` declarations inside a function body are compiled by emitting their code with a jump-over instruction (so sequential execution doesn't fall through), then saving/restoring the enclosing function's codegen state.
+- **The `gen_block` bug**: Blocks without a tail expression (like `{ let x = 3; }`) weren't pushing a unit value onto the stack, which caused stack corruption in nested blocks. Took a while to track down.
 
-- **Parsing with `syn` and `TokenStream`.**
-  -> Extending the parser to handle mul/div and parentheses was the tricky part. Getting operator precedence right took me some time, I had to think about it with pen and paper to understand the recursive descent approach.
+Limitation: the `mips` crate VM doesn't support `mul` or `div` instructions, so those tests are ignored. The textual assembly output is still correct.
 
-- **EBNF specification.**
-  -> Documenting the grammar helped me think more clearly about what expressions are valid and how to avoid ambiguity.
+## Phase 6 : CLI
 
-## Lab 3 — Parser & VM (Natural interpretation)
+- **`clap` for argument parsing**: I used `#[derive(Parser)]` and it was very clean, you annotate a struct and `clap` generates parsing, help messages, and validation. Connecting all the previous phases into one binary was satisfying.
+- **Flags**: `--input`, `--ast`, `--type_check`, `--vm`, `--code_gen`, `--asm`, `--run`.
 
-- **Abstract Syntax Tree (AST) to represent RNR.**
-  -> I designed the AST using Rust enums and structs. Each variant of `Expr` and `Statement` maps to a language construct (if, while, function call, etc.). Having a clean AST made the rest of the work much easier.
+## General Takeaways
 
-- **Parsing from Rust to AST.**
-  -> I implemented `Parse` for all the AST types using the `syn` crate. The hardest part was getting operator precedence right : I had to implement a proper precedence climbing parser to handle things like `2 + 3 * 4` correctly. Also, making `if` and blocks work as expressions inside binary operations was tricky.
+### What went well
+- Seeing a program written in RnR syntax get parsed, type-checked, compiled to MIPS, and executed correctly on the VM. That's the moment where the whole pipeline clicks.
+- Peer reviews were genuinely useful, other developers pointed out missing tests and edge cases I hadn't considered.
+- Writing tests early and often saved me many times, especially when refactoring the codegen or fixing bugs in the VM.
 
-- **Variable environment representing state.**
-  -> I implemented a stacked environment (`Env`) with push/pop scope. At first I had separate environments for variables and functions, but after a peer review I realized it was better to use a single env to handle cases where a variable shadows a function name.
+### What was hard
+- Debugging codegen bugs. When a generated program loops forever or gives the wrong result, you have to trace through assembly and register values manually.
+- The `gen_block` / semi flag bug took a long time to track down. The symptom was wrong return values from nested blocks, and the cause was deep in the codegen logic.
 
-- **Natural interpretation.**
-  -> The VM evaluates the AST by walking it recursively. Getting blocks right (local scope, return value from last expression, the `semi` flag) was probably the thing that took the most time. Also implementing function hoisting, where `fn` declarations are visible before the line they appear on, was an interesting concept I hadn't thought about before.
-
-I also implemented short-circuit evaluation for `&&` and `||` and chained `else if`. Arrays are not supported.
-
-## Lab 4 — Type Checker
-
-- **The role of semantic analysis in a compiler.**
-  -> I understood that type checking happens after parsing and catches errors that the grammar alone cannot express (like adding a bool to an int). Its basically another layer of validation before you can generate code.
-
-- **The basics of type environments and type checking.**
-  -> Very similar to the VM but instead of values I track types. I reused the same `Env` structure with `push_scope`/`pop_scope`. The `unify` function checks that two types match and reports an error otherwise.
-
-- **Type inference and simple polymorphism (overloading).**
-  -> I implemented function overloading: you can have multiple `fn` with the same name but different parameter types, and the type checker resolves calls by exact match. This was interesting to implement, I store a vector of signatures per name in the `FunEnv`.
-
-- **Mutability check.**
-  -> Assignment to a non-`mut` variable is rejected at type-check time. I also enforce it at runtime in the VM as an extra safety net, but the static check is the main one.
-
-Overall this lab made me appreciate how much work a real type checker does. Even for our small language there are a lot of edge cases to handle.
-
-## Lab 5 — Code Generation (MIPS)
-
-- **The role of backend code generation in a compiler.**
-  -> Going from AST to actual assembly was interesting. It really made the whole pipeline concrete, you see your high-level code turn into load/store/add/branch instructions.
-
-- **RISC-like instruction sets and memory regions.**
-  -> I already had some notions from a previous course, but working with the `mips` crate and implementing the stack frame layout in practice was a good refresher. Having to manage sp, fp, ra myself made me understand how fragile low-level code is.
-
-- **The basics of stack machines.**
-  -> The approach is: evaluate expressions by pushing results onto the stack, then pop operands, compute, push result back. It's simple in theory but in practice you have to be very careful with the order of push/pop, especially for binary operations where left and right operands matter.
-
-- **Managing state for code generation (function frames).**
-  -> This was the most time-consuming part. The stack frame layout (arguments above fp, ra and old_fp saved, locals below fp) has to be exact or everything breaks. I spent a lot of time debugging off-by-one errors in fp-relative offsets.
-
-- **Automated code generation for AST constructs.**
-  -> I wrote a `CodeGen` struct that traverses the AST recursively, similar in structure to the type checker. For each node type I emit the corresponding MIPS instructions. The `gen_block` function was especially tricky : I had a bug where blocks without a tail expression (like `{ let x = 3; }`) didn't push a unit value onto the stack, which caused stack corruption in nested blocks.
-
-One limitation: the `mips` crate VM doesn't support `mul` or `div` instructions, so those tests are ignored. The textual assembly output is still correct though.
-
-## Lab 6 — CLI
-
-- **Rudimentary shell/terminal interaction.**
-  -> I created a binary `rnr` that reads a source file, parses it, and optionally runs type checking, the VM, and/or code generation depending on the flags.
-
-- **Command line parsing.**
-  -> I used the `clap` crate with the `#[derive(Parser)]` macro. It was really nice to use, you just annotate a struct and clap generates the argument parsing, help messages, and validation for you. Connecting all the previous labs into one program was satisfying.
-
-The flags are: `--input`, `--ast`, `--type_check`, `--vm`, `--code_gen`, `--asm`, `--run`. The instructions mentioned `-vm` and `-asm` as short flags but `clap` only supports single-character short flags, so I kept them as long flags only.
-
-## General reflection
-
-### Highs
-- Seeing a program I wrote in RnR syntax get parsed, type-checked, compiled to MIPS, and then run correctly on the VM. Thats the moment where the whole pipeline clicks.
-- The peer reviews were really useful, other students pointed out missing tests and edge cases I hadn't considered (like checking runtime output, or testing function hoisting properly).
-
-### Lows
-- Debugging codegen bugs. When a generated program loops forever or gives the wrong result, you have to stare at the assembly and trace through register values manually. It's tedious but it teaches you to be careful.
-- The `gen_block` / semi flag bug took me a while to track down. The symptom was wrong return values from nested blocks, and the cause was deep in the codegen logic.
-
-### Did I learn something new?
-Yes : I learned the full pipeline from source code to machine instructions, which I had only seen in theory before. I also got much more comfortable with Rust itself (ownership, pattern matching, error handling). Working with `syn` for parsing was interesting, and using `clap` for the CLI showed me how Rust crates can make things that would be tedious by hand very clean.
-
-The biggest takeaway is probably about testing: writing tests early and often saved me many times, especially when refactoring the codegen or fixing bugs in the VM. Every time I fixed something I added a regression test, and that habit paid off.
+### What I learned
+- The full compilation pipeline from source code to machine instructions, something I had only seen in theory before.
+- Much more comfortable with Rust itself: ownership, pattern matching, error handling, trait-based design.
+- The `syn` crate for parsing and `clap` for CLI showed me how Rust's ecosystem can make complex tasks clean and ergonomic.
+- The biggest takeaway is about testing discipline: every bug fix gets a regression test, and that habit pays off every time you refactor.

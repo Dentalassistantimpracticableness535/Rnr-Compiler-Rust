@@ -1,31 +1,30 @@
-# Changelog for RNR
+# Changelog
 
-Note : I used AI to help to write this
+## Contributors / Reviewers
 
-  ## Contributors / Reviewers
+Peer-review feedback incorporated into the project:
 
-  The following peer-review comments were incorporated into the project. Each entry lists the
-  reviewer identifier and a short description of their contribution or suggestion (see `reviews.txt`).
-
-  - Guillaume Darras: pointed out that `if` expressions without an `else` should ensure the `then` branch
-    is `Unit` when used as a statement expression; suggested a failing test and we implemented
-    `if_without_else_then_must_be_unit` to enforce this behavior.
-  - Rasmus Kebert: suggested adding `impl crate::common::Eval<Type> for Block` (and similar helpers)
-    to simplify tests; reported two shadowing-related tests which led to checks and clarifications
-    around variable shadowing semantics in the type checker and `insert` behavior.
-  - Anton Nyström: requested end-to-end tests that parse source strings, generate assembly and run the
-    generated code to verify runtime behaviour; this motivated adding integration tests for codegen+VM (using the `mips` crate VM).
+- **Guillaume Darras**: Pointed out that `if` expressions without an `else` should ensure the `then` branch
+  is `Unit` when used as a statement expression; suggested a failing test — implemented as
+  `if_without_else_then_must_be_unit`.
+- **Rasmus Kebert**: Suggested adding `impl Eval<Type> for Block` to simplify tests; reported
+  shadowing-related tests which led to clarifications around variable shadowing semantics.
+- **Anton Nyström**: Requested end-to-end tests that parse source strings, generate assembly and run the
+  generated code; this motivated adding integration tests for codegen + MIPS VM execution.
 
 
-## Additional features implemented
+## Notable Features
 
-- Mutability enforcement at runtime: the VM rejects assignment to variables that were not created as mutable cells (`let mut` or `mut` parameters).
-- Reference support in AST/VM/type-checker: `&expr` / `&mut expr` and `*expr` with typed `Type::Ref` in the static checker and `Val::RefName(name, is_mut)` / `Val::RefVal(Box<Val>)` at runtime; assignment-through-deref checks.
-- Function overloading preserved at runtime: `Env::insert_overload` and `Val::Overloads` allow multiple `fn` declarations with the same name to coexist; the VM selects the matching overload by runtime argument shapes.
-- Hoisting + overload-aware hoisting: local `fn` declarations are hoisted into the block's scope before statement execution and hoisting preserves overload groups.
+- **Mutability enforcement** at both compile time and runtime.
+- **Reference support** (`&expr`, `&mut expr`, `*expr`) in AST, type checker, interpreter, and codegen.
+- **Function overloading**: multiple `fn` declarations with the same name and different parameter types.
+- **Function hoisting**: local `fn` declarations are visible before the line they appear on.
+- **Local (nested) functions**: fully supported in interpreter and codegen (MIPS).
+- **Short-circuit evaluation** for `&&` and `||`.
 
+---
 
-## Timeline global features
+## Timeline
 
 ## 2025-11-23
 
@@ -145,3 +144,24 @@ See `ebnf.md` for up-to-date grammar documentation.
   - 12 of 13 `ref_deref` integration tests un-ignored (all pass); `gcd_harder` stays ignored
     (cross-scope `RefName` aliasing not yet supported).
   - `short_circuit` integration test un-ignored.
+
+## 2025-12-10
+
+- Codegen (`src/codegen.rs`):
+  - **Local (nested) function codegen**: `Statement::Fn` in `gen_stmt` now generates the
+    function's code (label, prologue, body, epilogue) instead of silently skipping it.
+    A `b skip_fn_X` instruction prevents sequential execution from falling into the function body;
+    the enclosing function's codegen state (params, locals, pending locals, next_local offset) is
+    saved and restored around the nested `generate_function` call.
+  - CLI `-r` flag now displays the return value: `mips run: t0 = <value>`.
+
+- Examples:
+  - Fixed `test_vm.rs`: `b_label("main")` → `bal_label("main")` (was causing an infinite loop
+    because `b` does not set `ra`, so `jr ra` jumped to address 0).
+
+- Tests:
+  - Added `gen_local_fn_inside_main`, `gen_two_local_fns`, `gen_local_fn_with_locals` codegen tests.
+  - Total: 207 tests passing, 0 failed, 6 ignored.
+
+- Code quality:
+  - `cargo clippy --all-targets` — 0 warnings, 0 errors.

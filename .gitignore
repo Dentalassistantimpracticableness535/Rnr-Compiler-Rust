@@ -1,3 +1,9 @@
 /target
 Cargo.lock
-
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.asm
+ast.json
